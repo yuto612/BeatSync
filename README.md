@@ -15,10 +15,13 @@ BPM Sync Visualizer は、mp3 または wav ファイルを読み込み、波形
 
 ## インストール
 1. .NET 8 SDK をインストール
-2. ソースをクローンして `dotnet build` を実行
+2. リポジトリをクローン
+3. `dotnet restore` で依存パッケージを取得
+4. `dotnet build` を実行
+5. `dotnet test` でテストを実行
 
 ## 使い方
-1. アプリを起動
+1. アプリを起動（`dotnet run -p BGMSyncVisualizer.csproj`）
 2. ファイルを読み込み
 3. 開始位置をクリックで指定
 4. BPM を入力

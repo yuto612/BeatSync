@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(export PATH=\"$HOME/.dotnet:$PATH\")",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet --version)",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe --version)",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe build)",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe build Tests/BGMSyncVisualizer.Tests.csproj)",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe test Tests/BGMSyncVisualizer.Tests.csproj --logger \"console;verbosity=detailed\")",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe test Tests/BGMSyncVisualizer.Tests.csproj --logger \"console;verbosity=normal\")"
+    ],
+    "deny": []
+  }
+}

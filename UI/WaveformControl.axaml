@@ -1,4 +1,44 @@
-<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="BGMSyncVisualizer.WaveformControl">
-  <Canvas x:Name="PART_Canvas" Background="Black" />
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="BGMSyncVisualizer.UI.WaveformControl"
+             Height="200">
+    
+    <Grid>
+        <Canvas Name="WaveformCanvas" 
+                Background="Black" 
+                ClipToBounds="True"
+                PointerPressed="OnCanvasPointerPressed"
+                PointerMoved="OnCanvasPointerMoved"/>
+        
+        <!-- Current position indicator -->
+        <Rectangle Name="CurrentPositionIndicator"
+                   Width="2"
+                   Fill="Yellow"
+                   VerticalAlignment="Stretch"
+                   HorizontalAlignment="Left"
+                   IsVisible="False"/>
+        
+        <!-- Start marker -->
+        <Rectangle Name="StartMarker"
+                   Width="4"
+                   Fill="Orange"
+                   Stroke="Red"
+                   StrokeThickness="1"
+                   VerticalAlignment="Stretch"
+                   HorizontalAlignment="Left"
+                   Opacity="0.8"/>
+        
+        <!-- Tooltip -->
+        <Border Name="TooltipBorder"
+                Background="#CC000000"
+                CornerRadius="3"
+                Padding="5,2"
+                IsVisible="False"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top">
+            <TextBlock Name="TooltipText" 
+                       Foreground="White"
+                       FontSize="10"/>
+        </Border>
+    </Grid>
 </UserControl>

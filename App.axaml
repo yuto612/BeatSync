@@ -1,8 +1,9 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:fluent="clr-namespace:Avalonia.Themes.Fluent;assembly=Avalonia.Themes.Fluent">
-  <!-- FluentTheme が解決できないエラーを回避するために Fluent の名前空間を追加 -->
-  <Application.Styles>
-    <fluent:FluentTheme Mode="Light" />
-  </Application.Styles>
+             x:Class="BGMSyncVisualizer.App"
+             RequestedThemeVariant="Default">
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
 </Application>

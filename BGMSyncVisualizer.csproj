@@ -1,17 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.0" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0" />
-    <!-- ReactiveUI 19.5.16 では解決できなかったため 19.5.31 に統一 -->
-    <PackageReference Include="ReactiveUI" Version="19.5.31" />
-    <!-- FluentTheme 未解決エラー対策として追加 -->
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0" />
-    <PackageReference Include="NAudio" Version="2.2.0" />
+    <Folder Include="Models\" />
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.10" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Winmm" Version="2.2.1" />
+  </ItemGroup>
+
 </Project>

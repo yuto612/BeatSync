@@ -9,6 +9,7 @@ public class WaveformControlViewModel : ReactiveObject
     private double _startMarkerPosition = 0.0;
     private double _currentPosition = 0.0;
     private double _durationSeconds = 0.0;
+    private bool _canSeek = false;
 
     public float[] WaveformData
     {
@@ -54,6 +55,12 @@ public class WaveformControlViewModel : ReactiveObject
     {
         get => _durationSeconds;
         set => this.RaiseAndSetIfChanged(ref _durationSeconds, value);
+    }
+
+    public bool CanSeek
+    {
+        get => _canSeek;
+        set => this.RaiseAndSetIfChanged(ref _canSeek, value);
     }
 
     public event EventHandler<double>? SeekRequested;

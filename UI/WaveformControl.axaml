@@ -5,40 +5,54 @@
     
     <Grid>
         <Canvas Name="WaveformCanvas" 
-                Background="Black" 
+                Background="#1A202C" 
                 ClipToBounds="True"
                 PointerPressed="OnCanvasPointerPressed"
                 PointerMoved="OnCanvasPointerMoved"/>
         
-        <!-- Current position indicator -->
+        <!-- Current position indicator (Yellow) -->
         <Rectangle Name="CurrentPositionIndicator"
-                   Width="2"
-                   Fill="Yellow"
+                   Width="3"
+                   Fill="#D69E2E"
                    VerticalAlignment="Stretch"
                    HorizontalAlignment="Left"
-                   IsVisible="False"/>
+                   IsVisible="False"
+                   Opacity="0.9"/>
         
-        <!-- Start marker -->
+        <!-- Start position marker (Red) -->
         <Rectangle Name="StartMarker"
-                   Width="4"
-                   Fill="Orange"
-                   Stroke="Red"
-                   StrokeThickness="1"
+                   Width="3"
+                   Fill="#E53E3E"
                    VerticalAlignment="Stretch"
                    HorizontalAlignment="Left"
-                   Opacity="0.8"/>
+                   Opacity="0.9"/>
+        
+        <!-- Start marker label -->
+        <Border Name="StartMarkerLabel"
+                Background="#E53E3E"
+                CornerRadius="4"
+                Padding="6,2"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="0,4,0,0">
+            <TextBlock Text="START" 
+                       Foreground="White"
+                       FontSize="8"
+                       FontWeight="Bold"/>
+        </Border>
         
         <!-- Tooltip -->
         <Border Name="TooltipBorder"
-                Background="#CC000000"
-                CornerRadius="3"
-                Padding="5,2"
+                Background="#2D3748"
+                CornerRadius="4"
+                Padding="8,4"
                 IsVisible="False"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top">
             <TextBlock Name="TooltipText" 
                        Foreground="White"
-                       FontSize="10"/>
+                       FontSize="10"
+                       FontWeight="Medium"/>
         </Border>
     </Grid>
 </UserControl>

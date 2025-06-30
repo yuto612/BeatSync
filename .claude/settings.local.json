@@ -13,7 +13,18 @@
       "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe build)",
       "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe build Tests/BGMSyncVisualizer.Tests.csproj)",
       "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe test Tests/BGMSyncVisualizer.Tests.csproj --logger \"console;verbosity=detailed\")",
-      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe test Tests/BGMSyncVisualizer.Tests.csproj --logger \"console;verbosity=normal\")"
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe test Tests/BGMSyncVisualizer.Tests.csproj --logger \"console;verbosity=normal\")",
+      "Bash(grep:*)",
+      "Bash(xmllint:*)",
+      "Bash(awk:*)",
+      "Bash(sed:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(/home/michishita/.dotnet/dotnet build)",
+      "Bash(chmod:*)",
+      "Bash(/home/michishita/.dotnet/dotnet clean)",
+      "Bash(/home/michishita/.dotnet/dotnet build --no-restore)"
     ],
     "deny": []
   }

@@ -16,6 +16,7 @@ public partial class WaveformControl : UserControl
     private Canvas? _waveformCanvas;
     private Rectangle? _startMarker;
     private Rectangle? _currentPositionIndicator;
+    private Border? _startMarkerLabel;
     private Border? _tooltipBorder;
     private TextBlock? _tooltipText;
 
@@ -45,6 +46,7 @@ public partial class WaveformControl : UserControl
         _waveformCanvas = this.FindControl<Canvas>("WaveformCanvas");
         _startMarker = this.FindControl<Rectangle>("StartMarker");
         _currentPositionIndicator = this.FindControl<Rectangle>("CurrentPositionIndicator");
+        _startMarkerLabel = this.FindControl<Border>("StartMarkerLabel");
         _tooltipBorder = this.FindControl<Border>("TooltipBorder");
         _tooltipText = this.FindControl<TextBlock>("TooltipText");
 
@@ -103,8 +105,7 @@ public partial class WaveformControl : UserControl
             {
                 Width = Math.Max(1, stepX),
                 Height = lineHeight,
-                Fill = Brushes.LimeGreen,
-                Stroke = Brushes.LimeGreen,
+                Fill = new SolidColorBrush(Color.Parse("#38A169")), // Modern green
                 StrokeThickness = 0
             };
 
@@ -116,7 +117,7 @@ public partial class WaveformControl : UserControl
 
     private void UpdateMarkers()
     {
-        if (_startMarker == null || _currentPositionIndicator == null || _viewModel == null)
+        if (_startMarker == null || _currentPositionIndicator == null || _startMarkerLabel == null || _viewModel == null)
             return;
 
         var width = this.Bounds.Width;
@@ -128,8 +129,10 @@ public partial class WaveformControl : UserControl
 
         Canvas.SetLeft(_startMarker, startX);
         Canvas.SetLeft(_currentPositionIndicator, currentX);
+        Canvas.SetLeft(_startMarkerLabel, startX + 5); // Offset label slightly
 
         _currentPositionIndicator.IsVisible = _viewModel.CurrentPosition > 0;
+        _startMarkerLabel.IsVisible = _viewModel.StartMarkerPosition > 0;
     }
 
     private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)

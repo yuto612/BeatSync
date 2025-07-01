@@ -6,9 +6,7 @@
     <Grid>
         <Canvas Name="WaveformCanvas" 
                 Background="#1A202C" 
-                ClipToBounds="True"
-                PointerPressed="OnCanvasPointerPressed"
-                PointerMoved="OnCanvasPointerMoved"/>
+                ClipToBounds="True"/>
         
         <!-- Current position indicator (Yellow) -->
         <Rectangle Name="CurrentPositionIndicator"
@@ -18,41 +16,5 @@
                    HorizontalAlignment="Left"
                    IsVisible="False"
                    Opacity="0.9"/>
-        
-        <!-- Start position marker (Red) -->
-        <Rectangle Name="StartMarker"
-                   Width="3"
-                   Fill="#E53E3E"
-                   VerticalAlignment="Stretch"
-                   HorizontalAlignment="Left"
-                   Opacity="0.9"/>
-        
-        <!-- Start marker label -->
-        <Border Name="StartMarkerLabel"
-                Background="#E53E3E"
-                CornerRadius="4"
-                Padding="6,2"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Margin="0,4,0,0">
-            <TextBlock Text="START" 
-                       Foreground="White"
-                       FontSize="8"
-                       FontWeight="Bold"/>
-        </Border>
-        
-        <!-- Tooltip -->
-        <Border Name="TooltipBorder"
-                Background="#2D3748"
-                CornerRadius="4"
-                Padding="8,4"
-                IsVisible="False"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top">
-            <TextBlock Name="TooltipText" 
-                       Foreground="White"
-                       FontSize="10"
-                       FontWeight="Medium"/>
-        </Border>
     </Grid>
 </UserControl>

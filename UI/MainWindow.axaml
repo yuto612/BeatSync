@@ -123,9 +123,10 @@
                         CornerRadius="8"
                         Padding="40,20"
                         DragDrop.AllowDrop="True"
-                        MinHeight="80">
+                        MinHeight="80"
+                        Cursor="Hand">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="📁 MP3/WAVファイルをここにドロップするか、クリックして選択"
+                        <TextBlock Text="📁 音楽ファイルをここにドロップするか、クリックして選択"
                                    HorizontalAlignment="Center"
                                    FontSize="16"
                                    FontWeight="Medium"
@@ -135,6 +136,25 @@
                                    FontSize="14"
                                    Foreground="#3182CE"
                                    Margin="0,8,0,0"/>
+                        <!-- File action buttons -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                            <Button Content="📁 ファイル選択"
+                                    Background="#3182CE"
+                                    Foreground="White"
+                                    FontSize="12"
+                                    Padding="12,6"
+                                    CornerRadius="4"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding SelectFileCommand}"/>
+                            <Button Content="🗑️ クリア"
+                                    Background="#E53E3E"
+                                    Foreground="White"
+                                    FontSize="12"
+                                    Padding="12,6"
+                                    CornerRadius="4"
+                                    Command="{Binding ClearFileCommand}"
+                                    IsVisible="{Binding IsFileLoaded}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -252,7 +272,7 @@
                     </Button>
                 </Grid>
                 
-                <!-- Flash Enable & Status -->
+                <!-- Flash Enable & Volume Control -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="40,0,0,0">
                     <CheckBox Content="フラッシュ同期" 
                               IsChecked="{Binding IsBpmSyncEnabled}"
@@ -261,7 +281,36 @@
                               FontWeight="Bold"
                               Foreground="#F7FAFC"
                               HorizontalAlignment="Center"
-                              Margin="0,0,0,12"/>
+                              Margin="0,0,0,8"/>
+                    
+                    <!-- Volume Control -->
+                    <StackPanel Margin="0,0,0,8">
+                        <TextBlock Text="🔊 音量" 
+                                   FontSize="12" 
+                                   FontWeight="Bold"
+                                   Foreground="#F7FAFC"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Grid.Column="0"
+                                    Value="{Binding Volume}"
+                                    Minimum="0"
+                                    Maximum="1"
+                                    Width="80"
+                                    TickFrequency="0.1"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding VolumePercentage}"
+                                       FontSize="10"
+                                       Foreground="#A0AEC0"
+                                       VerticalAlignment="Center"
+                                       Margin="8,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                    
                     <Border Background="#3182CE"
                             CornerRadius="8"
                             Padding="12,8"
@@ -353,11 +402,13 @@
                 BorderThickness="1"
                 CornerRadius="6" 
                 Margin="20,5"
-                Padding="12">
+                Padding="12"
+                ClipToBounds="True">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
@@ -368,30 +419,67 @@
                            FontWeight="Bold" 
                            Foreground="#F7FAFC" 
                            VerticalAlignment="Center"
-                           Margin="0,0,15,0"/>
+                           Margin="0,0,12,0"/>
                 
                 <!-- Waveform Display -->
                 <Border Grid.Column="1"
                         Background="#1A202C" 
                         CornerRadius="4" 
-                        Padding="8"
-                        Height="50">
+                        Padding="4"
+                        Height="50"
+                        Margin="8,0"
+                        ClipToBounds="True">
                     <local:WaveformControl DataContext="{Binding WaveformViewModel}"
-                                           IsEnabled="{Binding CanSeek}"/>
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch"/>
+                </Border>
+                
+                <!-- Start Time Settings -->
+                <Border Grid.Column="2"
+                        Background="#4A5568"
+                        CornerRadius="6"
+                        Padding="8"
+                        Margin="8,0">
+                    <StackPanel>
+                        <TextBlock Text="開始時間" 
+                                   FontSize="10" 
+                                   FontWeight="Bold"
+                                   Foreground="#F7FAFC"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding StartTimeText}"
+                                 Background="#2D3748"
+                                 Foreground="#F7FAFC"
+                                 BorderBrush="#3182CE"
+                                 Width="60"
+                                 Height="24"
+                                 FontSize="12"
+                                 FontFamily="Consolas,Monaco,monospace"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 MaxLength="5"
+                                 Watermark="mm:ss"/>
+                        <TextBlock Text="{Binding StartTimeDisplay}"
+                                   FontSize="8"
+                                   Foreground="#A0AEC0"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
                 </Border>
                 
                 <!-- Waveform Info -->
-                <StackPanel Grid.Column="2" 
+                <StackPanel Grid.Column="3" 
                             Orientation="Horizontal" 
                             VerticalAlignment="Center"
-                            Margin="15,0,0,0">
+                            HorizontalAlignment="Center"
+                            Margin="8,0,0,0">
                     <TextBlock Text="🔴" 
-                               FontSize="12" 
+                               FontSize="10" 
                                Foreground="#E53E3E"
                                VerticalAlignment="Center"
-                               Margin="0,0,8,0"/>
+                               Margin="0,0,4,0"/>
                     <TextBlock Text="🔵" 
-                               FontSize="12" 
+                               FontSize="10" 
                                Foreground="#3182CE"
                                VerticalAlignment="Center"/>
                 </StackPanel>
@@ -435,88 +523,64 @@
                         </Grid.ColumnDefinitions>
                         
                         <!-- 1拍目 -->
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse Fill="{Binding Circle1Color}"
-                                     Width="120" Height="120"
-                                     HorizontalAlignment="Center"
-                                     Margin="10">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="{Binding Circle1GlowRadius}" 
-                                                      OffsetX="0" 
-                                                      OffsetY="0"
-                                                      Color="{Binding Circle1GlowColor}"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="1" 
-                                       FontSize="32" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       Margin="0,10,0,0"/>
-                        </StackPanel>
+                        <Ellipse Grid.Column="0" 
+                                 Fill="{Binding Circle1Color}"
+                                 Width="120" Height="120"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="10">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="{Binding Circle1GlowRadius}" 
+                                                  OffsetX="0" 
+                                                  OffsetY="0"
+                                                  Color="{Binding Circle1GlowColor}"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
                         
                         <!-- 2拍目 -->
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse Fill="{Binding Circle2Color}"
-                                     Width="120" Height="120"
-                                     HorizontalAlignment="Center"
-                                     Margin="10">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="{Binding Circle2GlowRadius}" 
-                                                      OffsetX="0" 
-                                                      OffsetY="0"
-                                                      Color="{Binding Circle2GlowColor}"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="2" 
-                                       FontSize="32" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       Margin="0,10,0,0"/>
-                        </StackPanel>
+                        <Ellipse Grid.Column="1" 
+                                 Fill="{Binding Circle2Color}"
+                                 Width="120" Height="120"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="10">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="{Binding Circle2GlowRadius}" 
+                                                  OffsetX="0" 
+                                                  OffsetY="0"
+                                                  Color="{Binding Circle2GlowColor}"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
                         
                         <!-- 3拍目 -->
-                        <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse Fill="{Binding Circle3Color}"
-                                     Width="120" Height="120"
-                                     HorizontalAlignment="Center"
-                                     Margin="10">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="{Binding Circle3GlowRadius}" 
-                                                      OffsetX="0" 
-                                                      OffsetY="0"
-                                                      Color="{Binding Circle3GlowColor}"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="3" 
-                                       FontSize="32" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       Margin="0,10,0,0"/>
-                        </StackPanel>
+                        <Ellipse Grid.Column="2" 
+                                 Fill="{Binding Circle3Color}"
+                                 Width="120" Height="120"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="10">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="{Binding Circle3GlowRadius}" 
+                                                  OffsetX="0" 
+                                                  OffsetY="0"
+                                                  Color="{Binding Circle3GlowColor}"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
                         
                         <!-- 4拍目 -->
-                        <StackPanel Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse Fill="{Binding Circle4Color}"
-                                     Width="120" Height="120"
-                                     HorizontalAlignment="Center"
-                                     Margin="10">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="{Binding Circle4GlowRadius}" 
-                                                      OffsetX="0" 
-                                                      OffsetY="0"
-                                                      Color="{Binding Circle4GlowColor}"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="4" 
-                                       FontSize="32" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       Margin="0,10,0,0"/>
-                        </StackPanel>
+                        <Ellipse Grid.Column="3" 
+                                 Fill="{Binding Circle4Color}"
+                                 Width="120" Height="120"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="10">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="{Binding Circle4GlowRadius}" 
+                                                  OffsetX="0" 
+                                                  OffsetY="0"
+                                                  Color="{Binding Circle4GlowColor}"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
                     </Grid>
                 </Viewbox>
 
@@ -614,6 +678,15 @@
                         Padding="30,12" 
                         CornerRadius="8"
                         Command="{Binding StopCommand}"
+                        Margin="0,0,15,0"/>
+                <Button Content="{Binding FullscreenButtonText}" 
+                        Background="#9F7AEA" 
+                        Foreground="White"
+                        FontSize="18" 
+                        FontWeight="Bold"
+                        Padding="30,12" 
+                        CornerRadius="8"
+                        Command="{Binding ToggleFullscreenCommand}"
                         Margin="0,0,15,0"/>
                 <CheckBox Content="🔄 ループ" 
                           IsChecked="{Binding Loop}"

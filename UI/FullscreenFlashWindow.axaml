@@ -1,0 +1,182 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:BGMSyncVisualizer.UI"
+        xmlns:local="using:BGMSyncVisualizer.UI"
+        xmlns:converters="using:BGMSyncVisualizer.UI.Converters"
+        x:Class="BGMSyncVisualizer.UI.FullscreenFlashWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Fullscreen Flash"
+        WindowState="FullScreen"
+        Background="Black"
+        Foreground="White"
+        ShowInTaskbar="False"
+        Topmost="True">
+
+    <!-- Flash Area - Full Screen -->
+    <Grid>
+        <!-- Single Area Pattern -->
+        <Border x:Name="SingleFlashArea" 
+                Background="{Binding FlashBackground}"
+                Opacity="{Binding FlashOpacity}"
+                IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=SingleArea}">
+            <Viewbox Stretch="Uniform">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding BeatCounterText}" 
+                               FontSize="300"
+                               FontWeight="Bold"
+                               Foreground="{Binding FlashTextColor}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Viewbox>
+        </Border>
+
+        <!-- Four Circles Pattern -->
+        <Viewbox Stretch="Uniform"
+                 IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=FourCircles}">
+            <Grid Width="1200" Height="300">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- 1拍目 -->
+                <Ellipse Grid.Column="0" 
+                         Fill="{Binding Circle1Color}"
+                         Width="200" Height="200"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Margin="20">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="{Binding Circle1GlowRadius}" 
+                                          OffsetX="0" 
+                                          OffsetY="0"
+                                          Color="{Binding Circle1GlowColor}"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+                
+                <!-- 2拍目 -->
+                <Ellipse Grid.Column="1" 
+                         Fill="{Binding Circle2Color}"
+                         Width="200" Height="200"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Margin="20">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="{Binding Circle2GlowRadius}" 
+                                          OffsetX="0" 
+                                          OffsetY="0"
+                                          Color="{Binding Circle2GlowColor}"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+                
+                <!-- 3拍目 -->
+                <Ellipse Grid.Column="2" 
+                         Fill="{Binding Circle3Color}"
+                         Width="200" Height="200"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Margin="20">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="{Binding Circle3GlowRadius}" 
+                                          OffsetX="0" 
+                                          OffsetY="0"
+                                          Color="{Binding Circle3GlowColor}"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+                
+                <!-- 4拍目 -->
+                <Ellipse Grid.Column="3" 
+                         Fill="{Binding Circle4Color}"
+                         Width="200" Height="200"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Margin="20">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="{Binding Circle4GlowRadius}" 
+                                          OffsetX="0" 
+                                          OffsetY="0"
+                                          Color="{Binding Circle4GlowColor}"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+            </Grid>
+        </Viewbox>
+
+        <!-- Progressive Bar Pattern -->
+        <Viewbox Stretch="Uniform"
+                 IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=ProgressiveBar}">
+            <Grid Width="1200" Height="200">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- バー1 -->
+                <Border Grid.Column="0" 
+                        Background="{Binding Bar1Color}"
+                        CornerRadius="25,0,0,25"
+                        Margin="0,0,10,0"
+                        Height="150">
+                    <TextBlock Text="1" 
+                               FontSize="100" 
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding Bar1TextColor}"/>
+                </Border>
+                
+                <!-- バー2 -->
+                <Border Grid.Column="1" 
+                        Background="{Binding Bar2Color}"
+                        Margin="10,0"
+                        Height="150">
+                    <TextBlock Text="2" 
+                               FontSize="100" 
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding Bar2TextColor}"/>
+                </Border>
+                
+                <!-- バー3 -->
+                <Border Grid.Column="2" 
+                        Background="{Binding Bar3Color}"
+                        Margin="10,0"
+                        Height="150">
+                    <TextBlock Text="3" 
+                               FontSize="100" 
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding Bar3TextColor}"/>
+                </Border>
+                
+                <!-- バー4 -->
+                <Border Grid.Column="3" 
+                        Background="{Binding Bar4Color}"
+                        CornerRadius="0,25,25,0"
+                        Margin="10,0,0,0"
+                        Height="150">
+                    <TextBlock Text="4" 
+                               FontSize="100" 
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding Bar4TextColor}"/>
+                </Border>
+            </Grid>
+        </Viewbox>
+
+        <!-- Exit instructions -->
+        <TextBlock Text="ESCキーまたはクリックで終了"
+                   FontSize="16"
+                   Foreground="Gray"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Bottom"
+                   Margin="20"
+                   Opacity="0.7"/>
+    </Grid>
+</Window>

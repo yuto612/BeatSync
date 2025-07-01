@@ -14,11 +14,7 @@ public partial class WaveformControl : UserControl
 {
     private WaveformControlViewModel? _viewModel;
     private Canvas? _waveformCanvas;
-    private Rectangle? _startMarker;
     private Rectangle? _currentPositionIndicator;
-    private Border? _startMarkerLabel;
-    private Border? _tooltipBorder;
-    private TextBlock? _tooltipText;
 
     public WaveformControl()
     {
@@ -44,11 +40,7 @@ public partial class WaveformControl : UserControl
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
         _waveformCanvas = this.FindControl<Canvas>("WaveformCanvas");
-        _startMarker = this.FindControl<Rectangle>("StartMarker");
         _currentPositionIndicator = this.FindControl<Rectangle>("CurrentPositionIndicator");
-        _startMarkerLabel = this.FindControl<Border>("StartMarkerLabel");
-        _tooltipBorder = this.FindControl<Border>("TooltipBorder");
-        _tooltipText = this.FindControl<TextBlock>("TooltipText");
 
         UpdateWaveform();
         UpdateMarkers();
@@ -63,7 +55,6 @@ public partial class WaveformControl : UserControl
                 case nameof(WaveformControlViewModel.WaveformData):
                     UpdateWaveform();
                     break;
-                case nameof(WaveformControlViewModel.StartMarkerPosition):
                 case nameof(WaveformControlViewModel.CurrentPosition):
                     UpdateMarkers();
                     break;
@@ -117,61 +108,18 @@ public partial class WaveformControl : UserControl
 
     private void UpdateMarkers()
     {
-        if (_startMarker == null || _currentPositionIndicator == null || _startMarkerLabel == null || _viewModel == null)
+        if (_currentPositionIndicator == null || _viewModel == null)
             return;
 
         var width = this.Bounds.Width;
         if (width <= 0)
             return;
 
-        var startX = _viewModel.StartMarkerPosition * width;
         var currentX = _viewModel.CurrentPosition * width;
-
-        Canvas.SetLeft(_startMarker, startX);
         Canvas.SetLeft(_currentPositionIndicator, currentX);
-        Canvas.SetLeft(_startMarkerLabel, startX + 5); // Offset label slightly
-
         _currentPositionIndicator.IsVisible = _viewModel.CurrentPosition > 0;
-        _startMarkerLabel.IsVisible = _viewModel.StartMarkerPosition > 0;
     }
 
-    private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (_waveformCanvas == null || _viewModel == null)
-            return;
-
-        var position = e.GetPosition(this);
-        var width = this.Bounds.Width;
-        
-        if (width <= 0)
-            return;
-
-        var normalizedPosition = position.X / width;
-        normalizedPosition = Math.Max(0, Math.Min(1, normalizedPosition));
-
-        System.Diagnostics.Debug.WriteLine($"Waveform clicked at normalized position: {normalizedPosition}");
-        _viewModel.OnWaveformClicked(normalizedPosition);
-    }
-
-    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
-    {
-        if (_waveformCanvas == null || _viewModel == null || _tooltipBorder == null || _tooltipText == null)
-            return;
-
-        var position = e.GetPosition(this);
-        var width = this.Bounds.Width;
-        
-        if (width <= 0)
-            return;
-
-        var normalizedPosition = position.X / width;
-        normalizedPosition = Math.Max(0, Math.Min(1, normalizedPosition));
-
-        _tooltipText.Text = _viewModel.GetTimeString(normalizedPosition);
-        Canvas.SetLeft(_tooltipBorder, position.X + 10);
-        Canvas.SetTop(_tooltipBorder, position.Y - 25);
-        _tooltipBorder.IsVisible = true;
-    }
 
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)

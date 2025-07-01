@@ -24,7 +24,9 @@
       "Bash(/home/michishita/.dotnet/dotnet build)",
       "Bash(chmod:*)",
       "Bash(/home/michishita/.dotnet/dotnet clean)",
-      "Bash(/home/michishita/.dotnet/dotnet build --no-restore)"
+      "Bash(/home/michishita/.dotnet/dotnet build --no-restore)",
+      "Bash(/home/codespace/.dotnet/dotnet build)",
+      "Bash(/usr/bin/dotnet build:*)"
     ],
     "deny": []
   }

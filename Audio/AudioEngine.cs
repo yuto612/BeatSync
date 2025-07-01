@@ -40,6 +40,12 @@ namespace BGMSyncVisualizer.Audio
             set { lock (_playbackLock) { if (_loopStream != null) _loopStream.CurrentTime = TimeSpan.FromSeconds(value); } }
         }
 
+        public float Volume 
+        { 
+            get { lock (_playbackLock) { return _waveOut?.Volume ?? 1.0f; } }
+            set { lock (_playbackLock) { if (_waveOut != null) _waveOut.Volume = Math.Max(0f, Math.Min(1f, value)); } }
+        }
+
         public void LoadFile(string filePath)
         {
             lock (_playbackLock)

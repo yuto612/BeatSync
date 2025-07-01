@@ -121,20 +121,18 @@ namespace BGMSyncVisualizer.Sync
 
             try
             {
-                bool flashState;
                 lock (_syncLock)
                 {
                     _beatCount++;
-                    flashState = (_beatCount % 2) == 1; // Alternate between true/false
                     
                     // Check for sync drift if audio is playing
                     CheckSyncDrift();
                 }
 
-                // Trigger flash state change on UI thread
-                FlashStateChanged?.Invoke(this, flashState);
+                // Trigger flash state change on UI thread - 毎拍でフラッシュ
+                FlashStateChanged?.Invoke(this, true);
                 
-                Debug.WriteLine($"BpmSyncController: Beat #{_beatCount}, Flash={flashState}");
+                Debug.WriteLine($"BpmSyncController: Beat #{_beatCount}");
             }
             catch (Exception ex)
             {

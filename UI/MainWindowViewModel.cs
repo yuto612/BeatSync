@@ -10,19 +10,20 @@ using Avalonia.Threading;
 using Avalonia.Media;
 using Avalonia.Animation;
 using Avalonia.Styling;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 
 namespace BGMSyncVisualizer.UI;
 
 public class MainWindowViewModel : ReactiveObject, IDisposable
 {
-    private readonly AudioEngine _audioEngine;
+    private AudioEngine _audioEngine;
     private readonly DispatcherTimer _positionTimer;
     private readonly BpmSyncController _bpmSyncController;
     private readonly BpmFlashController _flashController;
 
     private bool _isFileLoaded;
     private bool _isPlaying;
-    private double _startTimeSeconds;
     private string _statusMessage = "mp3またはwavファイルをドロップするか、クリックして選択してください";
     private string _statusMessageColor = "Gray";
 
@@ -68,6 +69,20 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     private IBrush _pattern1Background = new SolidColorBrush(Color.Parse("#3182CE"));
     private IBrush _pattern2Background = new SolidColorBrush(Color.Parse("#4A5568"));
     private IBrush _pattern3Background = new SolidColorBrush(Color.Parse("#4A5568"));
+    
+    // Fullscreen Flash properties
+    private bool _isFullscreenMode = false;
+    private FullscreenFlashWindow? _fullscreenWindow;
+    
+    // File selection
+    private Window? _parentWindow;
+    
+    // Volume control
+    private double _volume = 0.7; // Default 70%
+    
+    // Start time settings
+    private string _startTimeText = "00:00";
+    private double _startTimeSeconds = 0.0;
 
     public MainWindowViewModel()
     {
@@ -89,7 +104,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         Console.WriteLine("MainWindowViewModel: WaveformViewModel created");
 
         _audioEngine.PlaybackEnded += OnPlaybackEnded;
-        WaveformViewModel.SeekRequested += OnSeekRequested;
         Console.WriteLine("MainWindowViewModel: Essential event handlers attached");
 
         _positionTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(100) };
@@ -107,6 +121,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         
         // Flash Pattern Commands
         SelectFlashPatternCommand = ReactiveCommand.Create<string>(SelectFlashPattern);
+        
+        // Fullscreen Commands
+        ToggleFullscreenCommand = ReactiveCommand.Create(ToggleFullscreen);
+        
+        // File management commands
+        ClearFileCommand = ReactiveCommand.Create(ClearFile, this.WhenAnyValue(x => x.IsFileLoaded));
         
         Console.WriteLine("MainWindowViewModel: Commands created");
         
@@ -126,36 +146,25 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     
     // Flash Pattern Commands
     public ICommand SelectFlashPatternCommand { get; }
+    
+    // Fullscreen Commands
+    public ICommand ToggleFullscreenCommand { get; }
+    
+    // File management commands  
+    public ICommand ClearFileCommand { get; }
 
     public bool IsFileLoaded
     {
         get => _isFileLoaded;
-        private set
-        {
-            this.RaiseAndSetIfChanged(ref _isFileLoaded, value);
-            this.RaisePropertyChanged(nameof(CanSeek));
-            WaveformViewModel.CanSeek = CanSeek;
-        }
+        private set => this.RaiseAndSetIfChanged(ref _isFileLoaded, value);
     }
 
     public bool IsPlaying
     {
         get => _isPlaying;
-        private set
-        {
-            this.RaiseAndSetIfChanged(ref _isPlaying, value);
-            this.RaisePropertyChanged(nameof(CanSeek));
-            WaveformViewModel.CanSeek = CanSeek;
-        }
+        private set => this.RaiseAndSetIfChanged(ref _isPlaying, value);
     }
 
-    public bool CanSeek => IsFileLoaded && !IsPlaying;
-
-    public double StartTimeSeconds
-    {
-        get => _startTimeSeconds;
-        private set => this.RaiseAndSetIfChanged(ref _startTimeSeconds, value);
-    }
 
     public string StatusMessage
     {
@@ -170,8 +179,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     }
 
     public bool Loop { get; set; } = false;
-
-    public string CurrentStartText => $"開始時間: {TimeSpan.FromSeconds(_startTimeSeconds):mm\\:ss}";
 
     // BPM Flash Properties
     public int BPM
@@ -324,6 +331,85 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     public IBrush Pattern1Background { get => _pattern1Background; private set => this.RaiseAndSetIfChanged(ref _pattern1Background, value); }
     public IBrush Pattern2Background { get => _pattern2Background; private set => this.RaiseAndSetIfChanged(ref _pattern2Background, value); }
     public IBrush Pattern3Background { get => _pattern3Background; private set => this.RaiseAndSetIfChanged(ref _pattern3Background, value); }
+    
+    // Fullscreen Flash Properties
+    public bool IsFullscreenMode 
+    { 
+        get => _isFullscreenMode; 
+        private set => this.RaiseAndSetIfChanged(ref _isFullscreenMode, value); 
+    }
+    
+    public string FullscreenButtonText => IsFullscreenMode ? "通常表示" : "全画面フラッシュ";
+    
+    // Method to set parent window for file dialogs
+    public void SetParentWindow(Window window)
+    {
+        _parentWindow = window;
+    }
+    
+    // Volume Control
+    public double Volume
+    {
+        get => _volume;
+        set
+        {
+            var clampedValue = Math.Max(0.0, Math.Min(1.0, value));
+            this.RaiseAndSetIfChanged(ref _volume, clampedValue);
+            if (_audioEngine != null)
+            {
+                _audioEngine.Volume = (float)clampedValue;
+            }
+            this.RaisePropertyChanged(nameof(VolumePercentage));
+        }
+    }
+    
+    public string VolumePercentage => $"{(int)(Volume * 100)}%";
+    
+    // Start time settings
+    public string StartTimeText
+    {
+        get => _startTimeText;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _startTimeText, value);
+            ParseStartTime(value);
+            this.RaisePropertyChanged(nameof(StartTimeDisplay));
+        }
+    }
+    
+    public string StartTimeDisplay => $"開始: {_startTimeText}";
+    public double StartTimeSeconds => _startTimeSeconds;
+    
+    private void ParseStartTime(string timeText)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(timeText))
+            {
+                _startTimeSeconds = 0.0;
+                return;
+            }
+            
+            var parts = timeText.Split(':');
+            if (parts.Length == 2 && 
+                int.TryParse(parts[0], out var minutes) && 
+                int.TryParse(parts[1], out var seconds))
+            {
+                if (minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59)
+                {
+                    _startTimeSeconds = minutes * 60.0 + seconds;
+                    return;
+                }
+            }
+            
+            // Invalid format, reset to 0
+            _startTimeSeconds = 0.0;
+        }
+        catch
+        {
+            _startTimeSeconds = 0.0;
+        }
+    }
 
     public async Task LoadFileAsync(string filePath)
     {
@@ -353,13 +439,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
             Console.WriteLine($"LoadFileAsync: Set waveform data, duration = {_audioEngine.DurationSeconds}");
             
             IsFileLoaded = true;
-            StartTimeSeconds = 0.0;
             CurrentFileName = Path.GetFileName(filePath);
             AudioDurationText = FormatTime(_audioEngine.DurationSeconds);
             StatusMessage = $"ファイル読み込み完了: {Path.GetFileName(filePath)}";
             StatusMessageColor = "Green";
             
-            this.RaisePropertyChanged(nameof(CurrentStartText));
+            // Set initial volume
+            _audioEngine.Volume = (float)Volume;
             Console.WriteLine("=== LoadFileAsync: File load completed successfully ===");
         }
         catch (Exception ex)
@@ -375,11 +461,70 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
     private async Task SelectFileAsync()
     {
-        // This would typically open a file dialog
-        // For now, we'll provide a placeholder implementation
-        StatusMessage = "ファイル選択機能は実装中です。ドラッグ&ドロップをご利用ください。";
-        StatusMessageColor = "Orange";
-        await Task.CompletedTask;
+        try
+        {
+            if (_parentWindow?.StorageProvider == null)
+            {
+                StatusMessage = "ファイル選択機能を利用できません。ドラッグ&ドロップをご利用ください。";
+                StatusMessageColor = "Orange";
+                return;
+            }
+
+            var fileTypeFilter = new FilePickerFileType("Audio Files")
+            {
+                Patterns = new[] { "*.mp3", "*.wav", "*.flac", "*.m4a", "*.aac" }
+            };
+
+            var options = new FilePickerOpenOptions
+            {
+                Title = "音楽ファイルを選択",
+                AllowMultiple = false,
+                FileTypeFilter = new[] { fileTypeFilter }
+            };
+
+            var result = await _parentWindow.StorageProvider.OpenFilePickerAsync(options);
+
+            if (result?.Count > 0)
+            {
+                var file = result[0];
+                string filePath;
+                
+                // Try different methods to get file path
+                if (file.Path.IsFile)
+                {
+                    filePath = file.Path.LocalPath;
+                }
+                else
+                {
+                    // Fallback method
+                    filePath = file.TryGetLocalPath() ?? string.Empty;
+                }
+                
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    StatusMessage = "ファイルを読み込み中...";
+                    StatusMessageColor = "Blue";
+                    
+                    await LoadFileAsync(filePath);
+                }
+                else
+                {
+                    StatusMessage = "ファイルパスを取得できませんでした";
+                    StatusMessageColor = "Red";
+                }
+            }
+            else
+            {
+                StatusMessage = "ファイル選択がキャンセルされました";
+                StatusMessageColor = "Gray";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in SelectFileAsync: {ex}");
+            StatusMessage = $"ファイル選択エラー: {ex.Message}";
+            StatusMessageColor = "Red";
+        }
     }
 
     private void Play()
@@ -410,10 +555,22 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
             StatusMessageColor = "Blue";
 
             // --- Simplified Playback Logic ---
-            Console.WriteLine($"MainWindowViewModel.Play: Starting direct playback. Loop: {Loop}, StartTime: {StartTimeSeconds}s");
+            var startTime = StartTimeSeconds;
+            Console.WriteLine($"MainWindowViewModel.Play: Starting playback. Loop: {Loop}, StartTime: {startTime}s, Duration: {_audioEngine.DurationSeconds}s");
+            
+            // Validate start time doesn't exceed duration
+            if (startTime >= _audioEngine.DurationSeconds)
+            {
+                startTime = 0.0;
+                StartTimeText = "00:00";
+                Console.WriteLine("MainWindowViewModel.Play: Start time exceeds duration, reset to 0");
+            }
+            
             _audioEngine.Loop = Loop;
-            _audioEngine.SetPlaybackPosition(StartTimeSeconds);
+            _audioEngine.SetPlaybackPosition(startTime);
             _audioEngine.Play();
+            
+            Console.WriteLine($"MainWindowViewModel.Play: Audio started at position {_audioEngine.CurrentPositionSeconds}s");
             // --- End of Simplified Logic ---
 
             Console.WriteLine("MainWindowViewModel.Play: Setting IsPlaying to true");
@@ -433,7 +590,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
                 try
                 {
                     _bpmSyncController.BPM = _bpm;
-                    _bpmSyncController.Start(StartTimeSeconds, _audioEngine);
+                    _bpmSyncController.Start(startTime, _audioEngine);
                     
                     // Start Flash Controller
                     _flashController.Start();
@@ -517,15 +674,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         }
     }
 
-    private void OnSeekRequested(object? sender, double seconds)
-    {
-        System.Diagnostics.Debug.WriteLine($"MainWindowViewModel: OnSeekRequested called with seconds {seconds}");
-        StartTimeSeconds = seconds;
-        this.RaisePropertyChanged(nameof(CurrentStartText));
-        
-        StatusMessage = $"開始位置設定: {TimeSpan.FromSeconds(seconds):mm\\:ss}";
-        StatusMessageColor = "Blue";
-    }
 
     private void OnPositionTimerTick(object? sender, EventArgs e)
     {
@@ -789,6 +937,92 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
             }
         }
     }
+    
+    private void ToggleFullscreen()
+    {
+        if (_isFullscreenMode)
+        {
+            // 全画面モードを終了
+            _fullscreenWindow?.Close();
+            _fullscreenWindow = null;
+            IsFullscreenMode = false;
+        }
+        else
+        {
+            // 全画面モードを開始
+            try
+            {
+                _fullscreenWindow = new FullscreenFlashWindow();
+                _fullscreenWindow.DataContext = this;
+                _fullscreenWindow.Closed += OnFullscreenWindowClosed;
+                _fullscreenWindow.Show();
+                IsFullscreenMode = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error opening fullscreen window: {ex.Message}");
+                StatusMessage = $"全画面表示エラー: {ex.Message}";
+                StatusMessageColor = "Red";
+            }
+        }
+        
+        this.RaisePropertyChanged(nameof(FullscreenButtonText));
+        Console.WriteLine($"Fullscreen mode: {IsFullscreenMode}");
+    }
+    
+    private void OnFullscreenWindowClosed(object? sender, EventArgs e)
+    {
+        if (_fullscreenWindow != null)
+        {
+            _fullscreenWindow.Closed -= OnFullscreenWindowClosed;
+            _fullscreenWindow = null;
+        }
+        IsFullscreenMode = false;
+        this.RaisePropertyChanged(nameof(FullscreenButtonText));
+        Console.WriteLine("Fullscreen mode ended");
+    }
+    
+    private void ClearFile()
+    {
+        try
+        {
+            // Stop playback if running
+            if (IsPlaying)
+            {
+                Stop();
+            }
+            
+            // Clear audio engine
+            _audioEngine?.Dispose();
+            _audioEngine = new AudioEngine();
+            _audioEngine.PlaybackEnded += OnPlaybackEnded;
+            _audioEngine.Volume = (float)Volume;
+            
+            // Clear waveform
+            WaveformViewModel.WaveformData = Array.Empty<float>();
+            WaveformViewModel.DurationSeconds = 0;
+            WaveformViewModel.CurrentPosition = 0;
+            
+            // Reset properties
+            IsFileLoaded = false;
+            CurrentFileName = "ファイルが選択されていません";
+            AudioDurationText = "00:00";
+            CurrentPositionText = "00:00";
+            StartTimeText = "00:00";
+            _startTimeSeconds = 0.0;
+            
+            StatusMessage = "ファイルがクリアされました";
+            StatusMessageColor = "Gray";
+            
+            Console.WriteLine("File cleared successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error clearing file: {ex}");
+            StatusMessage = $"ファイルクリアエラー: {ex.Message}";
+            StatusMessageColor = "Red";
+        }
+    }
 
 
     private string FormatTime(double seconds)
@@ -803,5 +1037,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         _bpmSyncController?.Dispose();
         _flashController?.Dispose();
         _audioEngine?.Dispose();
+        _fullscreenWindow?.Close();
     }
 }

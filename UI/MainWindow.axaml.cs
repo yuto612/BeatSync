@@ -5,133 +5,93 @@ using Avalonia.Platform.Storage;
 using System.IO;
 using System.Linq;
 
-namespace BGMSyncVisualizer.UI;
-
-public partial class MainWindow : Window
+namespace BGMSyncVisualizer.UI
 {
-    private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
-        DataContext = new MainWindowViewModel();
-        
-        // Enable drag and drop
-        DragDrop.SetAllowDrop(this, true);
-        AddHandler(DragDrop.DropEvent, OnFileDrop);
-        AddHandler(DragDrop.DragOverEvent, OnDragOver);
-        
-        var selectFileButton = this.FindControl<Button>("SelectFileButton");
-        if (selectFileButton != null)
+        private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
+
+        public MainWindow()
         {
-            selectFileButton.Click += OnSelectFileButtonClick;
+            InitializeComponent();
+            var viewModel = new MainWindowViewModel();
+            DataContext = viewModel;
+            
+            // Set parent window reference for file dialogs
+            viewModel.SetParentWindow(this);
+            
+            // Enable drag and drop
+            DragDrop.SetAllowDrop(this, true);
+            AddHandler(DragDrop.DropEvent, OnFileDrop);
+            AddHandler(DragDrop.DragOverEvent, OnDragOver);
         }
-    }
 
-    private void OnDragOver(object? sender, DragEventArgs e)
-    {
-        if (e.Data.Contains(DataFormats.Files))
+        private void OnDragOver(object? sender, DragEventArgs e)
         {
-            var files = e.Data.GetFiles()?.ToArray();
-            if (files != null && files.Length > 0)
+            if (e.Data.Contains(DataFormats.Files))
             {
-                var file = files[0];
-                var extension = Path.GetExtension(file.Name).ToLowerInvariant();
-                e.DragEffects = (extension == ".mp3" || extension == ".wav") 
-                    ? DragDropEffects.Copy 
-                    : DragDropEffects.None;
+                var files = e.Data.GetFiles()?.ToArray();
+                if (files != null && files.Length > 0)
+                {
+                    var file = files[0];
+                    var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                    var supportedExtensions = new[] { ".mp3", ".wav", ".flac", ".m4a", ".aac" };
+                    e.DragEffects = supportedExtensions.Contains(extension) 
+                        ? DragDropEffects.Copy 
+                        : DragDropEffects.None;
+                }
+            }
+            else
+            {
+                e.DragEffects = DragDropEffects.None;
             }
         }
-        else
-        {
-            e.DragEffects = DragDropEffects.None;
-        }
-    }
 
-    private async void OnFileDrop(object? sender, DragEventArgs e)
-    {
-        if (ViewModel == null)
-            return;
-
-        try
+        private async void OnFileDrop(object? sender, DragEventArgs e)
         {
-            var files = e.Data.GetFiles()?.ToArray();
-            if (files != null && files.Length > 0)
+            if (ViewModel == null)
+                return;
+
+            try
             {
-                var file = files[0];
-                var extension = Path.GetExtension(file.Name).ToLowerInvariant();
-                
-                if (extension == ".mp3" || extension == ".wav")
+                var files = e.Data.GetFiles()?.ToArray();
+                if (files != null && files.Length > 0)
                 {
-                    var path = file.TryGetLocalPath();
-                    if (!string.IsNullOrEmpty(path))
+                    var file = files[0];
+                    var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                    var supportedExtensions = new[] { ".mp3", ".wav", ".flac", ".m4a", ".aac" };
+                    
+                    if (supportedExtensions.Contains(extension))
                     {
-                        await ViewModel.LoadFileAsync(path);
+                        var path = file.TryGetLocalPath();
+                        if (!string.IsNullOrEmpty(path))
+                        {
+                            await ViewModel.LoadFileAsync(path);
+                        }
+                        else
+                        {
+                            ViewModel.StatusMessage = "ファイルパスを取得できませんでした";
+                            ViewModel.StatusMessageColor = "Red";
+                        }
                     }
                     else
                     {
-                        ViewModel.StatusMessage = "ファイルパスを取得できませんでした";
+                        ViewModel.StatusMessage = "サポートされているファイル形式: MP3, WAV, FLAC, M4A, AAC";
                         ViewModel.StatusMessageColor = "Red";
                     }
                 }
-                else
-                {
-                    ViewModel.StatusMessage = "mp3またはwavファイルのみサポートしています";
-                    ViewModel.StatusMessageColor = "Red";
-                }
             }
-        }
-        catch (System.Exception ex)
-        {
-            ViewModel.StatusMessage = $"ファイルドロップエラー: {ex.Message}";
-            ViewModel.StatusMessageColor = "Red";
-        }
-    }
-
-    private async void OnSelectFileButtonClick(object? sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var storageProvider = this.StorageProvider;
-            var options = new FilePickerOpenOptions
+            catch (System.Exception ex)
             {
-                Title = "オーディオファイルを選択",
-                AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType("オーディオファイル") { Patterns = new[] { "*.mp3", "*.wav" } },
-                    FilePickerFileTypes.All
-                }
-            };
-
-            var files = await storageProvider.OpenFilePickerAsync(options);
-            if (files.Count > 0 && ViewModel != null)
-            {
-                var path = files[0].TryGetLocalPath();
-                if (!string.IsNullOrEmpty(path))
-                {
-                    await ViewModel.LoadFileAsync(path);
-                }
-                else
-                {
-                    ViewModel.StatusMessage = "ファイルパスを取得できませんでした";
-                    ViewModel.StatusMessageColor = "Red";
-                }
-            }
-        }
-        catch (System.Exception ex)
-        {
-            if (ViewModel != null)
-            {
-                ViewModel.StatusMessage = $"ファイル選択エラー: {ex.Message}";
+                ViewModel.StatusMessage = $"ファイルドロップエラー: {ex.Message}";
                 ViewModel.StatusMessageColor = "Red";
             }
         }
-    }
 
-    protected override void OnClosed(System.EventArgs e)
-    {
-        ViewModel?.Dispose();
-        base.OnClosed(e);
+        protected override void OnClosed(System.EventArgs e)
+        {
+            ViewModel?.Dispose();
+            base.OnClosed(e);
+        }
     }
 }

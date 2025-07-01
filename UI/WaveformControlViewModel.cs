@@ -6,7 +6,6 @@ namespace BGMSyncVisualizer.UI;
 public class WaveformControlViewModel : ReactiveObject
 {
     private float[] _waveformData = Array.Empty<float>();
-    private double _startMarkerPosition = 0.0;
     private double _currentPosition = 0.0;
     private double _durationSeconds = 0.0;
     private bool _canSeek = false;
@@ -17,11 +16,6 @@ public class WaveformControlViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _waveformData, value);
     }
 
-    public double StartMarkerPosition
-    {
-        get => _startMarkerPosition;
-        set => this.RaiseAndSetIfChanged(ref _startMarkerPosition, Math.Max(0, Math.Min(1, value)));
-    }
 
     public double CurrentPosition
     {
@@ -61,26 +55,5 @@ public class WaveformControlViewModel : ReactiveObject
     {
         get => _canSeek;
         set => this.RaiseAndSetIfChanged(ref _canSeek, value);
-    }
-
-    public event EventHandler<double>? SeekRequested;
-
-    public void OnWaveformClicked(double normalizedPosition)
-    {
-        System.Diagnostics.Debug.WriteLine($"WaveformViewModel: OnWaveformClicked called with position {normalizedPosition}");
-        System.Diagnostics.Debug.WriteLine($"WaveformViewModel: DurationSeconds = {DurationSeconds}");
-        
-        StartMarkerPosition = normalizedPosition;
-        var seekTime = normalizedPosition * DurationSeconds;
-        
-        System.Diagnostics.Debug.WriteLine($"WaveformViewModel: Invoking SeekRequested with time {seekTime}");
-        SeekRequested?.Invoke(this, seekTime);
-    }
-
-    public string GetTimeString(double normalizedPosition)
-    {
-        var seconds = normalizedPosition * DurationSeconds;
-        var timeSpan = TimeSpan.FromSeconds(seconds);
-        return $"{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
     }
 }

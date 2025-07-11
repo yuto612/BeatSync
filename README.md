@@ -1,8 +1,10 @@
 # 🎵 BeatSync
 
 **音楽のビートに完璧に同期するビジュアルフラッシュアプリケーション**
+.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応アプリケーションです。
 
-.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応のデスクトップ音楽ビジュアライザーです。
+<img width="1913" height="1014" alt="image" src="https://github.com/user-attachments/assets/92c7bf0f-bbc9-40f8-9395-51bb799d5cc8" />
+
 
 ## ✨ 特徴
 
@@ -261,20 +263,6 @@ dotnet build --configuration Debug
 dotnet run --configuration Debug
 ```
 
-## 🤝 貢献
-
-プロジェクトへの貢献を歓迎します！
-
-1. **フォーク** してブランチを作成
-2. **機能追加** または **バグ修正**
-3. **テスト** を追加・実行
-4. **プルリクエスト** を送信
-
-### 開発ガイドライン
-- C# コーディング規約に従う
-- 新機能にはテストを追加
-- ドキュメントを更新
-- コミットメッセージは明確に
 
 ## 📊 パフォーマンス
 
@@ -308,7 +296,6 @@ dotnet run --configuration Debug
 - **Avalonia UI**: クロスプラットフォームUIフレームワーク
 - **NAudio**: 音声処理ライブラリ
 - **ReactiveUI**: リアクティブMVVMフレームワーク
-- **DJコミュニティ**: インスピレーションとフィードバック
 
 ## 🔗 関連リンク
 
@@ -322,4 +309,3 @@ dotnet run --configuration Debug
 
 ---
 
-**🎉 BeatSync で音楽とビジュアルの完璧な同期を体験してください！**

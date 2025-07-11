@@ -1,8 +1,10 @@
 # 🎵 BeatSync
 
 **音楽のビートに完璧に同期するビジュアルフラッシュアプリケーション**
+.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応アプリケーションです。
 
-.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応のデスクトップ音楽ビジュアライザーです。
+<img width="1913" height="1014" alt="image" src="https://github.com/user-attachments/assets/92c7bf0f-bbc9-40f8-9395-51bb799d5cc8" />
+
 
 ## ✨ 特徴
 

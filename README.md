@@ -1,18 +1,20 @@
-# 🎵 BPM Sync Visualizer
+# 🎵 BeatSync
 
-**BPM（Beat Per Minute）に同期したビジュアルフラッシュエフェクトを楽しめる高精度音楽ビジュアライザー**
+**音楽のビートに完璧に同期するビジュアルフラッシュアプリケーション**
 
-.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応デスクトップアプリケーションです。
+.NET 8 と Avalonia UI で構築されたクロスプラットフォーム対応のデスクトップ音楽ビジュアライザーです。
 
 ## ✨ 特徴
 
 - 🎯 **高精度BPM同期**: ±10ms精度でビートに完全同期
 - 🎨 **多彩なフラッシュパターン**: 単一エリア、4つの円、プログレッシブバー
 - 📱 **全画面モード**: 没入感のあるフルスクリーンビジュアライザー
-- 🎛️ **直感的な操作**: ドラッグ&ドロップ、キーボード入力対応
+- 🎛️ **直感的な操作**: ドラッグ&ドロップでファイル読み込み
 - 🔊 **音量調節**: リアルタイム音量コントロール
 - ⏰ **開始時間設定**: 分秒レベルでの再生開始位置指定
 - 🔄 **ループ再生**: 設定した開始時間からの繰り返し再生
+- 💾 **楽曲記録**: BPM設定を自動保存・読み込み
+- 📝 **メモ機能**: 楽曲に関するメモを記録
 - 🖥️ **クロスプラットフォーム**: Windows、macOS、Linux対応
 
 ## 🎮 フラッシュパターン
@@ -51,7 +53,7 @@
 
 ### 推奨要件
 - **RAM**: 8GB以上
-- **画面解像度**: 1920x1080以上
+- **画面解像度**: 1920x1080以上（16:9最適化）
 - **CPU**: デュアルコア 2.0GHz以上
 
 ## 🚀 クイックスタート
@@ -81,7 +83,7 @@ dotnet run
 ### 基本的な使い方
 
 1. **🎵 音楽ファイルを読み込み**
-   - ドラッグ&ドロップまたは「📁 ファイル選択」ボタン
+   - ドラッグ&ドロップで音楽ファイルを読み込み
    - 対応形式: MP3, WAV, FLAC, M4A, AAC
 
 2. **⚙️ 設定を調整**
@@ -102,6 +104,11 @@ dotnet run
    - 「全画面フラッシュ」ボタンで没入感のあるビジュアライザー
    - ESCキーまたはクリックで終了
 
+6. **💾 楽曲管理**
+   - 「BPM保存」ボタンで現在のBPM設定を記録
+   - 保存済み楽曲リストから過去の設定を読み込み
+   - メモ欄で楽曲に関する情報を記録
+
 ### ⌨️ キーボードショートカット
 
 - **Space**: 再生/停止切り替え
@@ -112,7 +119,7 @@ dotnet run
 
 ### 📁 プロジェクト構造
 ```
-BGMSyncVisualizer/
+BPMSyncVisualizer/
 ├── Audio/                    # オーディオエンジン
 │   ├── AudioEngine.cs       # NAudio基盤の音声処理
 │   └── LoopStream.cs        # ループ再生機能
@@ -125,7 +132,12 @@ BGMSyncVisualizer/
 │   ├── MainWindowViewModel.cs # MVVMロジック
 │   ├── FullscreenFlashWindow.axaml # 全画面表示
 │   ├── WaveformControl.axaml # 波形表示コントロール
+│   ├── TrackInfoViewModel.cs # 楽曲情報管理
 │   └── Converters/          # データバインディング
+├── Services/                 # サービス層
+│   └── SettingsService.cs   # 設定・楽曲情報の永続化
+├── Data/                     # データモデル
+│   └── UserSettings.cs      # ユーザー設定・楽曲情報
 ├── Tests/                    # テストスイート
 └── Docs/                     # ドキュメント
 ```
@@ -148,6 +160,11 @@ BGMSyncVisualizer/
 - 複数フラッシュパターン実行
 - UI同期イベント管理
 
+#### SettingsService
+- JSON形式での設定永続化
+- 楽曲別BPM情報の管理
+- ユーザーメモの保存
+
 ## 🎛️ 高度な機能
 
 ### 🕒 開始時間設定
@@ -162,11 +179,17 @@ BGMSyncVisualizer/
 - BPM同期も開始時間から正確に開始
 - DJ練習やダンス練習に最適
 
+### 💾 楽曲データベース
+- 楽曲ファイルパスとBPM設定の自動関連付け
+- 最終使用時間の記録
+- メモ機能による楽曲情報管理
+- ワンクリックでの過去設定読み込み
+
 ### 🎨 カスタマイズ可能な要素
 - フラッシュ色（コード内で変更可能）
 - BPM範囲（30-300）
 - ビート強調パターン
-- レスポンシブレイアウト
+- レスポンシブレイアウト（16:9最適化）
 
 ## 🔧 トラブルシューティング
 
@@ -183,6 +206,7 @@ dotnet --version  # 確認
 - サポート形式を確認 (MP3, WAV, FLAC, M4A, AAC)
 - ファイル破損チェック
 - パスに特殊文字が含まれていないか確認
+- ドラッグ&ドロップを使用
 
 #### 🖥️ 全画面モードで画面が真っ暗
 - グラフィックドライバーを最新に更新
@@ -271,6 +295,7 @@ dotnet run --configuration Debug
 - **UI**: Avalonia UI 11.0
 - **音声処理**: NAudio 2.2
 - **アーキテクチャ**: MVVM + ReactiveUI
+- **データ永続化**: JSON
 - **テスト**: xUnit
 - **パターン**: Observer, Command, Factory
 
@@ -288,10 +313,13 @@ dotnet run --configuration Debug
 ## 🔗 関連リンク
 
 - [📖 セットアップガイド](SETUP_GUIDE.md)
+- [📋 インストール要件](INSTALL_REQUIREMENTS.md)
+- [📘 使用ガイド (日本語)](Docs/UsageGuide_ja.md)
+- [🎨 フラッシュ色カスタマイズ](Docs/HowToCustomizeFlashColors_ja.md)
 - [🔧 .NET 8 ドキュメント](https://docs.microsoft.com/dotnet/)
 - [🎨 Avalonia UI ドキュメント](https://docs.avaloniaui.net/)
 - [🎵 NAudio GitHub](https://github.com/naudio/NAudio)
 
 ---
 
-**🎉 BPM Sync Visualizer で音楽とビジュアルの完璧な同期を体験してください！**
+**🎉 BeatSync で音楽とビジュアルの完璧な同期を体験してください！**

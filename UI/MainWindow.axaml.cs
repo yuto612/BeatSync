@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -17,13 +18,12 @@ namespace BGMSyncVisualizer.UI
             var viewModel = new MainWindowViewModel();
             DataContext = viewModel;
             
-            // Set parent window reference for file dialogs
-            viewModel.SetParentWindow(this);
-            
             // Enable drag and drop
             DragDrop.SetAllowDrop(this, true);
             AddHandler(DragDrop.DropEvent, OnFileDrop);
             AddHandler(DragDrop.DragOverEvent, OnDragOver);
+            
+            // ファイル選択機能削除済み（ドラッグ&ドロップのみ）
         }
 
         private void OnDragOver(object? sender, DragEventArgs e)

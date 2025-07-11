@@ -5,7 +5,7 @@
         xmlns:converters="using:BGMSyncVisualizer.UI.Converters"
         x:Class="BGMSyncVisualizer.UI.FullscreenFlashWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Fullscreen Flash"
+        Title="BeatSync - Fullscreen"
         WindowState="FullScreen"
         Background="Black"
         Foreground="White"

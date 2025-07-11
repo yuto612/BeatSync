@@ -5,11 +5,11 @@
         xmlns:converters="using:BGMSyncVisualizer.UI.Converters"
         x:Class="BGMSyncVisualizer.UI.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="BPM Sync Visualizer"
-        Width="1200"
-        Height="800"
-        MinWidth="900"
-        MinHeight="700"
+        Title="BeatSync"
+        Width="1800"
+        Height="900"
+        MinWidth="1600"
+        MinHeight="800"
         WindowStartupLocation="CenterScreen"
         Background="#1A202C"
         Foreground="#F7FAFC">
@@ -68,11 +68,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>    <!-- Header -->
-            <RowDefinition Height="Auto"/>    <!-- File Import -->
-            <RowDefinition Height="Auto"/>    <!-- BPM Controls -->
-            <RowDefinition Height="Auto"/>    <!-- Flash Pattern Selection -->
-            <RowDefinition Height="80"/>      <!-- Waveform -->
-            <RowDefinition Height="*"/>       <!-- LARGE Flash Area -->
+            <RowDefinition Height="*"/>       <!-- Main Content Area -->
             <RowDefinition Height="Auto"/>    <!-- Control Buttons -->
             <RowDefinition Height="Auto"/>    <!-- Status Bar -->
         </Grid.RowDefinitions>
@@ -84,7 +80,7 @@
                 BorderBrush="#4A5568"
                 BorderThickness="0,0,0,2">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🎵 BPM同期ビジュアライザー" 
+                <TextBlock Text="🎵 BeatSync" 
                            FontSize="28" 
                            FontWeight="Bold" 
                            Foreground="#F7FAFC"
@@ -101,561 +97,659 @@
             </StackPanel>
         </Border>
 
-        <!-- File Import Section -->
-        <Border Grid.Row="1" 
-                Background="#2D3748" 
-                BorderBrush="#4A5568" 
-                BorderThickness="1"
-                CornerRadius="8" 
-                Margin="20,20,20,10"
-                Padding="20">
-            <StackPanel>
-                <TextBlock Text="オーディオファイル" 
-                           FontSize="16" 
-                           FontWeight="Bold" 
-                           Foreground="#F7FAFC" 
-                           Margin="0,0,0,10"/>
-                
-                <!-- Drag & Drop Area -->
-                <Border Background="#4A5568" 
-                        BorderBrush="#3182CE" 
-                        BorderThickness="2" 
-                        CornerRadius="8"
-                        Padding="40,20"
-                        DragDrop.AllowDrop="True"
-                        MinHeight="80"
-                        Cursor="Hand">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="📁 音楽ファイルをここにドロップするか、クリックして選択"
-                                   HorizontalAlignment="Center"
-                                   FontSize="16"
-                                   FontWeight="Medium"
-                                   Foreground="#E2E8F0"/>
-                        <TextBlock Text="{Binding CurrentFileName}"
-                                   HorizontalAlignment="Center"
-                                   FontSize="14"
-                                   Foreground="#3182CE"
-                                   Margin="0,8,0,0"/>
-                        <!-- File action buttons -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                            <Button Content="📁 ファイル選択"
-                                    Background="#3182CE"
-                                    Foreground="White"
-                                    FontSize="12"
-                                    Padding="12,6"
-                                    CornerRadius="4"
-                                    Margin="0,0,8,0"
-                                    Command="{Binding SelectFileCommand}"/>
-                            <Button Content="🗑️ クリア"
-                                    Background="#E53E3E"
-                                    Foreground="White"
-                                    FontSize="12"
-                                    Padding="12,6"
-                                    CornerRadius="4"
-                                    Command="{Binding ClearFileCommand}"
-                                    IsVisible="{Binding IsFileLoaded}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Border>
-
-        <!-- BPM Control Section -->
-        <Border Grid.Row="2" 
-                Background="#2D3748" 
-                CornerRadius="12" 
-                Padding="30"
-                Margin="20,10"
-                BorderBrush="#4A5568"
-                BorderThickness="1">
-            <Grid>
+        <!-- Main Content Area with 3-column layout -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>          <!-- Main area with 3 columns -->
+                <RowDefinition Height="Auto"/>       <!-- Waveform at bottom -->
+            </Grid.RowDefinitions>
+            
+            <!-- Top row with 3 columns -->
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="300"/>      <!-- Left Panel: File & Notes -->
+                    <ColumnDefinition Width="*"/>        <!-- Flash Area (center) -->
+                    <ColumnDefinition Width="300"/>      <!-- Right Panel: Settings -->
                 </Grid.ColumnDefinitions>
-                
-                <!-- BPM Label Section -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,40,0">
-                    <TextBlock Text="BPM設定" 
-                               FontSize="18" 
-                               FontWeight="Bold" 
-                               Foreground="#F7FAFC"/>
-                    <TextBlock Text="1分間の拍数" 
-                               FontSize="13" 
-                               Foreground="#A0AEC0"
-                               Margin="0,4,0,0"/>
-                </StackPanel>
-                
-                <!-- BPM Input - Enhanced Design -->
-                <Grid Grid.Column="1" 
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+            
+            <!-- Left Panel: File, Notes, Waveform -->
+            <ScrollViewer Grid.Column="0" 
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Margin="0,0,10,0">
+                <StackPanel Spacing="15">
                     
-                    <!-- Decrease Button -->
-                    <Button Grid.Column="0"
-                            Content="−" 
-                            Width="60" Height="80"
-                            FontSize="28" 
-                            FontWeight="Bold"
-                            Background="#E53E3E" 
-                            Foreground="White"
-                            CornerRadius="12,0,0,12"
-                            Command="{Binding DecreaseBpmCommand}"
-                            Margin="0"
-                            BorderThickness="0">
-                        <Button.Effect>
-                            <DropShadowEffect BlurRadius="8" 
-                                              OffsetX="0" 
-                                              OffsetY="2"
-                                              Color="#000000"
-                                              Opacity="0.3"/>
-                        </Button.Effect>
-                    </Button>
-                    
-                    <!-- BPM Input Display -->
-                    <Border Grid.Column="1"
-                            Background="#F7FAFC" 
-                            BorderBrush="#3182CE" 
-                            BorderThickness="3,3,3,3"
-                            Width="200"
-                            Height="80">
-                        <NumericUpDown x:Name="BpmInput"
-                                       Value="{Binding BPM, Mode=TwoWay}" 
-                                       Minimum="30"
-                                       Maximum="300"
-                                       Increment="1"
-                                       FontSize="42" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Stretch"
-                                       VerticalAlignment="Center"
-                                       Background="Transparent"
-                                       BorderThickness="0"
-                                       Foreground="#1A202C"
-                                       HorizontalContentAlignment="Center"
-                                       ShowButtonSpinner="False"
-                                       AllowSpin="True"
-                                       ClipValueToMinMax="True"/>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" 
-                                              OffsetX="0" 
-                                              OffsetY="4"
-                                              Color="#000000"
-                                              Opacity="0.2"/>
-                        </Border.Effect>
+                    <!-- File Import Section -->
+                    <Border Background="#2D3748" 
+                            BorderBrush="#4A5568" 
+                            BorderThickness="1"
+                            CornerRadius="8" 
+                            Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="オーディオファイル" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#F7FAFC" 
+                                       Margin="0,0,0,10"/>
+                            
+                            <!-- Drag & Drop Area -->
+                            <Border Background="#4A5568" 
+                                    BorderBrush="#3182CE" 
+                                    BorderThickness="2" 
+                                    CornerRadius="8"
+                                    Padding="20,15"
+                                    DragDrop.AllowDrop="True"
+                                    MinHeight="60"
+                                    Cursor="Hand">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="🎵 音楽ファイルをここにドラッグ&amp;ドロップしてください"
+                                               HorizontalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="#E2E8F0"/>
+                                    <TextBlock Text="{Binding CurrentFileName}"
+                                               HorizontalAlignment="Center"
+                                               FontSize="12"
+                                               Foreground="#3182CE"
+                                               Margin="0,5,0,0"/>
+                                    <!-- Clear button only -->
+                                    <Button Content="🗑️ クリア"
+                                            Background="#E53E3E"
+                                            Foreground="White"
+                                            FontSize="11"
+                                            Padding="10,5"
+                                            CornerRadius="4"
+                                            Margin="0,8,0,0"
+                                            HorizontalAlignment="Center"
+                                            Command="{Binding ClearFileCommand}"
+                                            IsVisible="{Binding IsFileLoaded}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                     </Border>
-                    
-                    <!-- Increase Button -->
-                    <Button Grid.Column="2"
-                            Content="+" 
-                            Width="60" Height="80"
-                            FontSize="28" 
-                            FontWeight="Bold"
-                            Background="#38A169" 
-                            Foreground="White"
-                            CornerRadius="0,12,12,0"
-                            Command="{Binding IncreaseBpmCommand}"
-                            Margin="0"
-                            BorderThickness="0">
-                        <Button.Effect>
-                            <DropShadowEffect BlurRadius="8" 
-                                              OffsetX="0" 
-                                              OffsetY="2"
-                                              Color="#000000"
-                                              Opacity="0.3"/>
-                        </Button.Effect>
-                    </Button>
-                </Grid>
-                
-                <!-- Flash Enable & Volume Control -->
-                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="40,0,0,0">
-                    <CheckBox Content="フラッシュ同期" 
-                              IsChecked="{Binding IsBpmSyncEnabled}"
-                              IsEnabled="{Binding !IsPlaying}"
-                              FontSize="14"
-                              FontWeight="Bold"
-                              Foreground="#F7FAFC"
-                              HorizontalAlignment="Center"
-                              Margin="0,0,0,8"/>
-                    
-                    <!-- Volume Control -->
-                    <StackPanel Margin="0,0,0,8">
-                        <TextBlock Text="🔊 音量" 
-                                   FontSize="12" 
-                                   FontWeight="Bold"
-                                   Foreground="#F7FAFC"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,4"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Slider Grid.Column="0"
-                                    Value="{Binding Volume}"
-                                    Minimum="0"
-                                    Maximum="1"
-                                    Width="80"
-                                    TickFrequency="0.1"/>
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding VolumePercentage}"
-                                       FontSize="10"
-                                       Foreground="#A0AEC0"
-                                       VerticalAlignment="Center"
-                                       Margin="8,0,0,0"/>
-                        </Grid>
-                    </StackPanel>
-                    
-                    <Border Background="#3182CE"
-                            CornerRadius="8"
-                            Padding="12,8"
-                            MinWidth="100">
-                        <TextBlock Text="{Binding FlashStatusText}"
-                                   FontSize="13"
-                                   FontWeight="Bold"
-                                   Foreground="White"
-                                   HorizontalAlignment="Center"/>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="6" 
-                                              OffsetX="0" 
-                                              OffsetY="2"
-                                              Color="#000000"
-                                              Opacity="0.2"/>
-                        </Border.Effect>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
 
-        <!-- Flash Pattern Selection -->
-        <Border Grid.Row="3" 
-                Background="#2D3748" 
-                CornerRadius="8" 
-                Padding="20"
-                Margin="20,10">
-            <StackPanel>
-                <TextBlock Text="フラッシュパターン設定" 
-                           FontSize="16" 
-                           FontWeight="Bold" 
-                           Foreground="White"
-                           Margin="0,0,0,15"/>
+                    <!-- Notes Section -->
+                    <Border Background="#2D3748" 
+                            BorderBrush="#4A5568" 
+                            BorderThickness="1"
+                            CornerRadius="8" 
+                            Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="メモ" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#F7FAFC" 
+                                       Margin="0,0,0,10"/>
+                            
+                            <ScrollViewer Height="80"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <TextBox Text="{Binding UserNotes, Mode=TwoWay}" 
+                                         Background="#4A5568"
+                                         Foreground="#F7FAFC"
+                                         BorderBrush="#3182CE"
+                                         BorderThickness="1"
+                                         CornerRadius="4"
+                                         Padding="8"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Watermark="BPMや楽曲に関するメモを入力してください..."/>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+                    
+                </StackPanel>
+            </ScrollViewer>
+            
+            <!-- Center Panel: Flash Area -->
+            <Grid Grid.Column="1" Margin="20,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 
+                <!-- Flash Area - Main Focus -->
+                <Border Grid.Row="0"
+                        Background="#1A202C"
+                        BorderBrush="#4A5568" 
+                        BorderThickness="3"
+                        CornerRadius="12">
+                    <Grid>
+                        <!-- Single Area Pattern -->
+                        <Border x:Name="SingleFlashArea" 
+                                Background="{Binding FlashBackground}"
+                                CornerRadius="12"
+                                Opacity="{Binding FlashOpacity}"
+                                IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=SingleArea}">
+                            <Viewbox Stretch="Uniform" Margin="20">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding BeatCounterText}" 
+                                               FontSize="120"
+                                               FontWeight="Bold"
+                                               Foreground="{Binding FlashTextColor}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Viewbox>
+                        </Border>
+
+                        <!-- Four Circles Pattern -->
+                        <Viewbox Stretch="Uniform" Margin="20"
+                                 IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=FourCircles}">
+                            <Grid Width="800" Height="200">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- 1拍目 -->
+                                <Ellipse Grid.Column="0" 
+                                         Fill="{Binding Circle1Color}"
+                                         Width="120" Height="120"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="10">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="{Binding Circle1GlowRadius}" 
+                                                          OffsetX="0" 
+                                                          OffsetY="0"
+                                                          Color="{Binding Circle1GlowColor}"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                
+                                <!-- 2拍目 -->
+                                <Ellipse Grid.Column="1" 
+                                         Fill="{Binding Circle2Color}"
+                                         Width="120" Height="120"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="10">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="{Binding Circle2GlowRadius}" 
+                                                          OffsetX="0" 
+                                                          OffsetY="0"
+                                                          Color="{Binding Circle2GlowColor}"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                
+                                <!-- 3拍目 -->
+                                <Ellipse Grid.Column="2" 
+                                         Fill="{Binding Circle3Color}"
+                                         Width="120" Height="120"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="10">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="{Binding Circle3GlowRadius}" 
+                                                          OffsetX="0" 
+                                                          OffsetY="0"
+                                                          Color="{Binding Circle3GlowColor}"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                
+                                <!-- 4拍目 -->
+                                <Ellipse Grid.Column="3" 
+                                         Fill="{Binding Circle4Color}"
+                                         Width="120" Height="120"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="10">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="{Binding Circle4GlowRadius}" 
+                                                          OffsetX="0" 
+                                                          OffsetY="0"
+                                                          Color="{Binding Circle4GlowColor}"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                            </Grid>
+                        </Viewbox>
+
+                        <!-- Progressive Bar Pattern -->
+                        <Viewbox Stretch="Uniform" Margin="20"
+                                 IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=ProgressiveBar}">
+                            <Grid Width="800" Height="150">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- バー1 -->
+                                <Border Grid.Column="0" 
+                                        Background="{Binding Bar1Color}"
+                                        CornerRadius="15,0,0,15"
+                                        Margin="0,0,5,0"
+                                        Height="100">
+                                    <TextBlock Text="1" 
+                                               FontSize="48" 
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Bar1TextColor}"/>
+                                </Border>
+                                
+                                <!-- バー2 -->
+                                <Border Grid.Column="1" 
+                                        Background="{Binding Bar2Color}"
+                                        Margin="5,0"
+                                        Height="100">
+                                    <TextBlock Text="2" 
+                                               FontSize="48" 
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Bar2TextColor}"/>
+                                </Border>
+                                
+                                <!-- バー3 -->
+                                <Border Grid.Column="2" 
+                                        Background="{Binding Bar3Color}"
+                                        Margin="5,0"
+                                        Height="100">
+                                    <TextBlock Text="3" 
+                                               FontSize="48" 
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Bar3TextColor}"/>
+                                </Border>
+                                
+                                <!-- バー4 -->
+                                <Border Grid.Column="3" 
+                                        Background="{Binding Bar4Color}"
+                                        CornerRadius="0,15,15,0"
+                                        Margin="5,0,0,0"
+                                        Height="100">
+                                    <TextBlock Text="4" 
+                                               FontSize="48" 
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Bar4TextColor}"/>
+                                </Border>
+                            </Grid>
+                        </Viewbox>
+                    </Grid>
+                </Border>
+                
+                <!-- Flash status display -->
+                <Border Grid.Row="1"
+                        Background="#3182CE"
+                        CornerRadius="8"
+                        Padding="12,8"
+                        Margin="0,15,0,0"
+                        HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding FlashStatusText}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                </Border>
+            </Grid>
+            
+            <!-- Right Panel: Settings Controls -->
+            <ScrollViewer Grid.Column="2" 
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Margin="10,0,0,0">
+                <StackPanel Spacing="15">
+                    
+                    <!-- Track List and BPM Save Section -->
+                    <Border Background="#2D3748" 
+                            BorderBrush="#4A5568" 
+                            BorderThickness="1"
+                            CornerRadius="8" 
+                            Padding="20">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="保存済みの曲" 
+                                           FontSize="16" 
+                                           FontWeight="Bold" 
+                                           Foreground="#F7FAFC" 
+                                           VerticalAlignment="Center"/>
+                                
+                                <Button Grid.Column="1"
+                                        Content="💾 BPM保存"
+                                        Background="#38A169"
+                                        Foreground="White"
+                                        FontSize="12"
+                                        Padding="12,6"
+                                        CornerRadius="4"
+                                        Command="{Binding SaveCurrentBpmCommand}"
+                                        IsEnabled="{Binding IsFileLoaded}"/>
+                            </Grid>
+                            
+                            <ScrollViewer MaxHeight="150" 
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          IsVisible="{Binding HasImportedTracks}">
+                                <ItemsControl ItemsSource="{Binding ImportedTracks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:TrackInfoViewModel">
+                                            <Border Background="#4A5568" 
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    Margin="0,0,0,4"
+                                                    Cursor="Hand">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding FileName}" 
+                                                                   FontSize="12" 
+                                                                   FontWeight="Bold"
+                                                                   Foreground="#F7FAFC"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding BpmDisplay}" 
+                                                                   FontSize="10"
+                                                                   Foreground="#A0AEC0"/>
+                                                    </StackPanel>
+                                                    
+                                                    <Button Grid.Column="1"
+                                                            Content="読み込み"
+                                                            Background="#3182CE"
+                                                            Foreground="White"
+                                                            FontSize="10"
+                                                            Padding="6,3"
+                                                            CornerRadius="3"
+                                                            Margin="6,0"
+                                                            Command="{Binding LoadCommand}"/>
+                                                    
+                                                    <Button Grid.Column="2"
+                                                            Content="削除"
+                                                            Background="#E53E3E"
+                                                            Foreground="White"
+                                                            FontSize="10"
+                                                            Padding="6,3"
+                                                            CornerRadius="3"
+                                                            Command="{Binding RemoveCommand}"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            
+                            <TextBlock Text="ファイルを読み込むと一覧に表示されます"
+                                       FontSize="12"
+                                       Foreground="#A0AEC0"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,10,0,0"
+                                       IsVisible="{Binding !HasImportedTracks}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BPM Control Section -->
+                    <Border Background="#2D3748" 
+                            CornerRadius="8" 
+                            Padding="20"
+                            BorderBrush="#4A5568"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="BPM設定" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#F7FAFC"
+                                       Margin="0,0,0,15"/>
+                            
+                            <!-- BPM Input Controls -->
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Decrease Button -->
+                                <Button Grid.Column="0"
+                                        Content="−" 
+                                        Width="45" Height="50"
+                                        FontSize="20" 
+                                        FontWeight="Bold"
+                                        Background="#E53E3E" 
+                                        Foreground="White"
+                                        CornerRadius="6,0,0,6"
+                                        Command="{Binding DecreaseBpmCommand}"
+                                        Margin="0"
+                                        BorderThickness="0"/>
+                                
+                                <!-- BPM Input Display -->
+                                <Border Grid.Column="1"
+                                        Background="#F7FAFC" 
+                                        BorderBrush="#3182CE" 
+                                        BorderThickness="2"
+                                        Width="120"
+                                        Height="50">
+                                    <NumericUpDown Value="{Binding BPM, Mode=TwoWay}" 
+                                                   Minimum="30"
+                                                   Maximum="300"
+                                                   Increment="1"
+                                                   FontSize="24" 
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Stretch"
+                                                   VerticalAlignment="Center"
+                                                   Background="Transparent"
+                                                   BorderThickness="0"
+                                                   Foreground="#1A202C"
+                                                   HorizontalContentAlignment="Center"
+                                                   ShowButtonSpinner="False"
+                                                   AllowSpin="True"
+                                                   ClipValueToMinMax="True"/>
+                                </Border>
+                                
+                                <!-- Increase Button -->
+                                <Button Grid.Column="2"
+                                        Content="+" 
+                                        Width="45" Height="50"
+                                        FontSize="20" 
+                                        FontWeight="Bold"
+                                        Background="#38A169" 
+                                        Foreground="White"
+                                        CornerRadius="0,6,6,0"
+                                        Command="{Binding IncreaseBpmCommand}"
+                                        Margin="0"
+                                        BorderThickness="0"/>
+                            </Grid>
+                            
+                            <!-- Flash Enable & Volume Control -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,15,0,0">
+                                <CheckBox Content="フラッシュ同期" 
+                                          IsChecked="{Binding IsBpmSyncEnabled}"
+                                          IsEnabled="{Binding !IsPlaying}"
+                                          FontSize="14"
+                                          FontWeight="Bold"
+                                          Foreground="#F7FAFC"
+                                          HorizontalAlignment="Center"
+                                          Margin="0,0,0,10"/>
+                                
+                                <!-- Volume Control -->
+                                <StackPanel>
+                                    <TextBlock Text="🔊 音量" 
+                                               FontSize="12" 
+                                               FontWeight="Bold"
+                                               Foreground="#F7FAFC"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,0,0,4"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0"
+                                                Value="{Binding Volume}"
+                                                Minimum="0"
+                                                Maximum="1"
+                                                Width="100"
+                                                TickFrequency="0.1"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding VolumePercentage}"
+                                                   FontSize="10"
+                                                   Foreground="#A0AEC0"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0,0,0"/>
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Flash Pattern Selection -->
+                    <Border Background="#2D3748" 
+                            CornerRadius="8" 
+                            Padding="20"
+                            BorderBrush="#4A5568"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="フラッシュパターン設定" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="White"
+                                       Margin="0,0,0,15"/>
+                            
+                            <StackPanel Spacing="8">
+                                <!-- パターン1: 単一エリア -->
+                                <Button Content="単一エリア"
+                                        Background="{Binding Pattern1Background}"
+                                        Foreground="White"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        Command="{Binding SelectFlashPatternCommand}"
+                                        CommandParameter="SingleArea"/>
+                                
+                                <!-- パターン2: 4つの円 -->
+                                <Button Content="4つの円"
+                                        Background="{Binding Pattern2Background}"
+                                        Foreground="White"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        Command="{Binding SelectFlashPatternCommand}"
+                                        CommandParameter="FourCircles"/>
+                                
+                                <!-- パターン3: プログレッシブバー -->
+                                <Button Content="プログレッシブバー"
+                                        Background="{Binding Pattern3Background}"
+                                        Foreground="White"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        Command="{Binding SelectFlashPatternCommand}"
+                                        CommandParameter="ProgressiveBar"/>
+                            </StackPanel>
+                            
+                            <!-- 現在のパターン表示 -->
+                            <TextBlock Text="{Binding CurrentPatternDescription}" 
+                                       FontSize="11"
+                                       Foreground="#A0AEC0"
+                                       HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                </StackPanel>
+            </ScrollViewer>
+            </Grid>
+            
+            <!-- Bottom row: Waveform & Analysis Section -->
+            <Border Grid.Row="1" 
+                    Background="#2D3748" 
+                    BorderBrush="#4A5568" 
+                    BorderThickness="1"
+                    CornerRadius="6" 
+                    Padding="12"
+                    Margin="0,10,0,0"
+                    ClipToBounds="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
-                    <!-- パターン1: 単一エリア -->
-                    <Button Grid.Column="0"
-                            Content="単一エリア"
-                            Background="{Binding Pattern1Background}"
-                            Foreground="White"
-                            CornerRadius="6"
-                            Padding="12,8"
-                            Margin="0,0,5,0"
-                            Command="{Binding SelectFlashPatternCommand}"
-                            CommandParameter="SingleArea"/>
-                    
-                    <!-- パターン2: 4つの円 -->
-                    <Button Grid.Column="1"
-                            Content="4つの円"
-                            Background="{Binding Pattern2Background}"
-                            Foreground="White"
-                            CornerRadius="6"
-                            Padding="12,8"
-                            Margin="5,0"
-                            Command="{Binding SelectFlashPatternCommand}"
-                            CommandParameter="FourCircles"/>
-                    
-                    <!-- パターン3: プログレッシブバー -->
-                    <Button Grid.Column="2"
-                            Content="プログレッシブバー"
-                            Background="{Binding Pattern3Background}"
-                            Foreground="White"
-                            CornerRadius="6"
-                            Padding="12,8"
-                            Margin="5,0,0,0"
-                            Command="{Binding SelectFlashPatternCommand}"
-                            CommandParameter="ProgressiveBar"/>
-                </Grid>
-                
-                <!-- 現在のパターン表示 -->
-                <TextBlock Text="{Binding CurrentPatternDescription}" 
-                           FontSize="12"
-                           Foreground="#A0AEC0"
-                           HorizontalAlignment="Center"
-                           Margin="0,10,0,0"/>
-            </StackPanel>
-        </Border>
-
-        <!-- Waveform & Analysis Section -->
-        <Border Grid.Row="4" 
-                Background="#2D3748" 
-                BorderBrush="#4A5568" 
-                BorderThickness="1"
-                CornerRadius="6" 
-                Margin="20,5"
-                Padding="12"
-                ClipToBounds="True">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <!-- Waveform Label -->
-                <TextBlock Grid.Column="0"
-                           Text="波形" 
-                           FontSize="14" 
-                           FontWeight="Bold" 
-                           Foreground="#F7FAFC" 
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0"/>
-                
-                <!-- Waveform Display -->
-                <Border Grid.Column="1"
-                        Background="#1A202C" 
-                        CornerRadius="4" 
-                        Padding="4"
-                        Height="50"
-                        Margin="8,0"
-                        ClipToBounds="True">
-                    <local:WaveformControl DataContext="{Binding WaveformViewModel}"
-                                           HorizontalAlignment="Stretch"
-                                           VerticalAlignment="Stretch"/>
-                </Border>
-                
-                <!-- Start Time Settings -->
-                <Border Grid.Column="2"
-                        Background="#4A5568"
-                        CornerRadius="6"
-                        Padding="8"
-                        Margin="8,0">
-                    <StackPanel>
-                        <TextBlock Text="開始時間" 
-                                   FontSize="10" 
-                                   FontWeight="Bold"
-                                   Foreground="#F7FAFC"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding StartTimeText}"
-                                 Background="#2D3748"
-                                 Foreground="#F7FAFC"
-                                 BorderBrush="#3182CE"
-                                 Width="60"
-                                 Height="24"
-                                 FontSize="12"
-                                 FontFamily="Consolas,Monaco,monospace"
-                                 HorizontalContentAlignment="Center"
-                                 VerticalContentAlignment="Center"
-                                 MaxLength="5"
-                                 Watermark="mm:ss"/>
-                        <TextBlock Text="{Binding StartTimeDisplay}"
-                                   FontSize="8"
-                                   Foreground="#A0AEC0"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,2,0,0"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Waveform Info -->
-                <StackPanel Grid.Column="3" 
-                            Orientation="Horizontal" 
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
-                            Margin="8,0,0,0">
-                    <TextBlock Text="🔴" 
-                               FontSize="10" 
-                               Foreground="#E53E3E"
+                    <!-- Waveform Label -->
+                    <TextBlock Grid.Column="0"
+                               Text="波形" 
+                               FontSize="14" 
+                               FontWeight="Bold" 
+                               Foreground="#F7FAFC" 
                                VerticalAlignment="Center"
-                               Margin="0,0,4,0"/>
-                    <TextBlock Text="🔵" 
-                               FontSize="10" 
-                               Foreground="#3182CE"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Flash Area - Main Focus -->
-        <Border Grid.Row="5" 
-                Background="#1A202C"
-                BorderBrush="#4A5568" 
-                BorderThickness="3"
-                CornerRadius="12"
-                Margin="20">
-            <Grid>
-                <!-- Single Area Pattern -->
-                <Border x:Name="SingleFlashArea" 
-                        Background="{Binding FlashBackground}"
-                        CornerRadius="12"
-                        Opacity="{Binding FlashOpacity}"
-                        IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=SingleArea}">
-                    <Viewbox Stretch="Uniform" Margin="20">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding BeatCounterText}" 
-                                       FontSize="120"
+                               Margin="0,0,12,0"/>
+                    
+                    <!-- Waveform Display -->
+                    <Border Grid.Column="1"
+                            Background="#1A202C" 
+                            CornerRadius="4" 
+                            Padding="4"
+                            Height="50"
+                            Margin="8,0"
+                            ClipToBounds="True">
+                        <local:WaveformControl DataContext="{Binding WaveformViewModel}"
+                                               HorizontalAlignment="Stretch"
+                                               VerticalAlignment="Stretch"/>
+                    </Border>
+                    
+                    <!-- Start Time Settings -->
+                    <Border Grid.Column="2"
+                            Background="#4A5568"
+                            CornerRadius="6"
+                            Padding="8"
+                            Margin="8,0">
+                        <StackPanel>
+                            <TextBlock Text="開始時間" 
+                                       FontSize="10" 
                                        FontWeight="Bold"
-                                       Foreground="{Binding FlashTextColor}"
-                                       HorizontalAlignment="Center"/>
+                                       Foreground="#F7FAFC"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding StartTimeText}"
+                                     Background="#2D3748"
+                                     Foreground="#F7FAFC"
+                                     BorderBrush="#3182CE"
+                                     Width="60"
+                                     Height="24"
+                                     FontSize="12"
+                                     FontFamily="Consolas,Monaco,monospace"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"
+                                     MaxLength="5"
+                                     Watermark="mm:ss"/>
                         </StackPanel>
-                    </Viewbox>
-                </Border>
-
-                <!-- Four Circles Pattern -->
-                <Viewbox Stretch="Uniform" Margin="20"
-                         IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=FourCircles}">
-                    <Grid Width="800" Height="200">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- 1拍目 -->
-                        <Ellipse Grid.Column="0" 
-                                 Fill="{Binding Circle1Color}"
-                                 Width="120" Height="120"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 Margin="10">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="{Binding Circle1GlowRadius}" 
-                                                  OffsetX="0" 
-                                                  OffsetY="0"
-                                                  Color="{Binding Circle1GlowColor}"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
-                        
-                        <!-- 2拍目 -->
-                        <Ellipse Grid.Column="1" 
-                                 Fill="{Binding Circle2Color}"
-                                 Width="120" Height="120"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 Margin="10">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="{Binding Circle2GlowRadius}" 
-                                                  OffsetX="0" 
-                                                  OffsetY="0"
-                                                  Color="{Binding Circle2GlowColor}"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
-                        
-                        <!-- 3拍目 -->
-                        <Ellipse Grid.Column="2" 
-                                 Fill="{Binding Circle3Color}"
-                                 Width="120" Height="120"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 Margin="10">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="{Binding Circle3GlowRadius}" 
-                                                  OffsetX="0" 
-                                                  OffsetY="0"
-                                                  Color="{Binding Circle3GlowColor}"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
-                        
-                        <!-- 4拍目 -->
-                        <Ellipse Grid.Column="3" 
-                                 Fill="{Binding Circle4Color}"
-                                 Width="120" Height="120"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 Margin="10">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="{Binding Circle4GlowRadius}" 
-                                                  OffsetX="0" 
-                                                  OffsetY="0"
-                                                  Color="{Binding Circle4GlowColor}"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
-                    </Grid>
-                </Viewbox>
-
-                <!-- Progressive Bar Pattern -->
-                <Viewbox Stretch="Uniform" Margin="20"
-                         IsVisible="{Binding SelectedFlashPattern, Converter={x:Static converters:EnumToBoolConverter.Instance}, ConverterParameter=ProgressiveBar}">
-                    <Grid Width="800" Height="150">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- バー1 -->
-                        <Border Grid.Column="0" 
-                                Background="{Binding Bar1Color}"
-                                CornerRadius="15,0,0,15"
-                                Margin="0,0,5,0"
-                                Height="100">
-                            <TextBlock Text="1" 
-                                       FontSize="48" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{Binding Bar1TextColor}"/>
-                        </Border>
-                        
-                        <!-- バー2 -->
-                        <Border Grid.Column="1" 
-                                Background="{Binding Bar2Color}"
-                                Margin="5,0"
-                                Height="100">
-                            <TextBlock Text="2" 
-                                       FontSize="48" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{Binding Bar2TextColor}"/>
-                        </Border>
-                        
-                        <!-- バー3 -->
-                        <Border Grid.Column="2" 
-                                Background="{Binding Bar3Color}"
-                                Margin="5,0"
-                                Height="100">
-                            <TextBlock Text="3" 
-                                       FontSize="48" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{Binding Bar3TextColor}"/>
-                        </Border>
-                        
-                        <!-- バー4 -->
-                        <Border Grid.Column="3" 
-                                Background="{Binding Bar4Color}"
-                                CornerRadius="0,15,15,0"
-                                Margin="5,0,0,0"
-                                Height="100">
-                            <TextBlock Text="4" 
-                                       FontSize="48" 
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{Binding Bar4TextColor}"/>
-                        </Border>
-                    </Grid>
-                </Viewbox>
-
-            </Grid>
-        </Border>
+                    </Border>
+                    
+                    <!-- Waveform Info -->
+                    <StackPanel Grid.Column="3" 
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Margin="8,0,0,0">
+                        <TextBlock Text="🔴" 
+                                   FontSize="10" 
+                                   Foreground="#E53E3E"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,4,0"/>
+                        <TextBlock Text="🔵" 
+                                   FontSize="10" 
+                                   Foreground="#3182CE"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- Control Buttons -->
-        <Border Grid.Row="6" 
+        <Border Grid.Row="2" 
                 Background="#2D3748" 
                 Padding="20"
                 Margin="20,10">
@@ -698,7 +792,7 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="7" 
+        <Border Grid.Row="3" 
                 Background="#4A5568" 
                 Padding="20,12">
             <Grid>

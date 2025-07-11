@@ -2,6 +2,7 @@ using ReactiveUI;
 using System;
 using System.IO;
 using System.Reactive;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using BGMSyncVisualizer.Audio;
@@ -12,6 +13,10 @@ using Avalonia.Animation;
 using Avalonia.Styling;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using BGMSyncVisualizer.Services;
+using BGMSyncVisualizer.Data;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace BGMSyncVisualizer.UI;
 
@@ -21,10 +26,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     private readonly DispatcherTimer _positionTimer;
     private readonly BpmSyncController _bpmSyncController;
     private readonly BpmFlashController _flashController;
+    private readonly SettingsService _settingsService;
 
     private bool _isFileLoaded;
     private bool _isPlaying;
-    private string _statusMessage = "mp3またはwavファイルをドロップするか、クリックして選択してください";
+    private string _statusMessage = "音楽ファイルをドラッグ&ドロップしてください";
     private string _statusMessageColor = "Gray";
 
     // BPM Flash related properties
@@ -74,8 +80,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     private bool _isFullscreenMode = false;
     private FullscreenFlashWindow? _fullscreenWindow;
     
-    // File selection
-    private Window? _parentWindow;
+    // ファイル選択機能削除（ドラッグ&ドロップのみ）
     
     // Volume control
     private double _volume = 0.7; // Default 70%
@@ -83,11 +88,20 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     // Start time settings
     private string _startTimeText = "00:00";
     private double _startTimeSeconds = 0.0;
+    
+    // Settings and notes
+    private string _userNotes = string.Empty;
+    private ObservableCollection<TrackInfoViewModel> _importedTracks = new();
+    private TrackInfo? _currentTrackInfo;
+    private bool _isInitialized = false;
 
     public MainWindowViewModel()
     {
         Console.WriteLine("=== BPM Sync Visualizer Starting ===");
         Console.WriteLine("MainWindowViewModel: Initializing components...");
+        
+        _settingsService = new SettingsService();
+        Console.WriteLine("MainWindowViewModel: SettingsService created");
         
         _audioEngine = new AudioEngine();
         Console.WriteLine("MainWindowViewModel: AudioEngine created");
@@ -110,7 +124,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         _positionTimer.Tick += OnPositionTimerTick;
         Console.WriteLine("MainWindowViewModel: Position timer created");
 
-        SelectFileCommand = ReactiveCommand.CreateFromTask(SelectFileAsync);
+        // ファイル選択は削除（ドラッグ&ドロップのみ）
         PlayCommand = ReactiveCommand.Create(Play, this.WhenAnyValue(x => x.IsFileLoaded, x => x.IsPlaying, (loaded, playing) => loaded && !playing));
         StopCommand = ReactiveCommand.Create(Stop, this.WhenAnyValue(x => x.IsPlaying));
         
@@ -128,14 +142,22 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         // File management commands
         ClearFileCommand = ReactiveCommand.Create(ClearFile, this.WhenAnyValue(x => x.IsFileLoaded));
         
+        // BPM Save command
+        SaveCurrentBpmCommand = ReactiveCommand.Create(SaveCurrentBpm, this.WhenAnyValue(x => x.IsFileLoaded));
+        
         Console.WriteLine("MainWindowViewModel: Commands created");
         
+        // Load settings
+        LoadSettings();
+        Console.WriteLine("MainWindowViewModel: Settings loaded");
+        
+        _isInitialized = true;
         Console.WriteLine("=== MainWindowViewModel initialization completed ===");
     }
 
     public WaveformControlViewModel WaveformViewModel { get; }
 
-    public ICommand SelectFileCommand { get; }
+    // SelectFileCommand削除（ドラッグ&ドロップのみ）
     public ICommand PlayCommand { get; }
     public ICommand StopCommand { get; }
     
@@ -152,6 +174,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     
     // File management commands  
     public ICommand ClearFileCommand { get; }
+    
+    // BPM Save command
+    public ICommand SaveCurrentBpmCommand { get; }
 
     public bool IsFileLoaded
     {
@@ -202,6 +227,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
                     {
                         StatusMessage = $"BPM設定: {value}";
                         StatusMessageColor = "Green";
+                    }
+                    
+                    // Save lastBpm individually when BPM changes
+                    if (_isInitialized)
+                    {
+                        SaveLastBpm();
                     }
                 }
                 else
@@ -290,6 +321,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
             _flashController.SelectedFlashPattern = value;
             UpdatePatternButtonColors();
             this.RaisePropertyChanged(nameof(CurrentPatternDescription));
+            if (_isInitialized)
+            {
+                SaveLastFlashPattern();
+            }
         }
     }
 
@@ -341,11 +376,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     
     public string FullscreenButtonText => IsFullscreenMode ? "通常表示" : "全画面フラッシュ";
     
-    // Method to set parent window for file dialogs
-    public void SetParentWindow(Window window)
-    {
-        _parentWindow = window;
-    }
+    // SetParentWindowメソッド削除（ファイル選択機能不要のため）
     
     // Volume Control
     public double Volume
@@ -360,6 +391,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
                 _audioEngine.Volume = (float)clampedValue;
             }
             this.RaisePropertyChanged(nameof(VolumePercentage));
+            if (_isInitialized)
+            {
+                SaveLastVolume();
+            }
         }
     }
     
@@ -379,6 +414,28 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     
     public string StartTimeDisplay => $"開始: {_startTimeText}";
     public double StartTimeSeconds => _startTimeSeconds;
+    
+    // Settings and notes properties
+    public string UserNotes
+    {
+        get => _userNotes;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _userNotes, value);
+            if (_isInitialized)
+            {
+                SaveUserNotes();
+            }
+        }
+    }
+    
+    public ObservableCollection<TrackInfoViewModel> ImportedTracks
+    {
+        get => _importedTracks;
+        set => this.RaiseAndSetIfChanged(ref _importedTracks, value);
+    }
+    
+    public bool HasImportedTracks => ImportedTracks.Any();
     
     private void ParseStartTime(string timeText)
     {
@@ -446,6 +503,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
             
             // Set initial volume
             _audioEngine.Volume = (float)Volume;
+            
+            // Save track info
+            SaveCurrentTrackInfo(filePath);
+            
             Console.WriteLine("=== LoadFileAsync: File load completed successfully ===");
         }
         catch (Exception ex)
@@ -459,73 +520,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         }
     }
 
-    private async Task SelectFileAsync()
-    {
-        try
-        {
-            if (_parentWindow?.StorageProvider == null)
-            {
-                StatusMessage = "ファイル選択機能を利用できません。ドラッグ&ドロップをご利用ください。";
-                StatusMessageColor = "Orange";
-                return;
-            }
-
-            var fileTypeFilter = new FilePickerFileType("Audio Files")
-            {
-                Patterns = new[] { "*.mp3", "*.wav", "*.flac", "*.m4a", "*.aac" }
-            };
-
-            var options = new FilePickerOpenOptions
-            {
-                Title = "音楽ファイルを選択",
-                AllowMultiple = false,
-                FileTypeFilter = new[] { fileTypeFilter }
-            };
-
-            var result = await _parentWindow.StorageProvider.OpenFilePickerAsync(options);
-
-            if (result?.Count > 0)
-            {
-                var file = result[0];
-                string filePath;
-                
-                // Try different methods to get file path
-                if (file.Path.IsFile)
-                {
-                    filePath = file.Path.LocalPath;
-                }
-                else
-                {
-                    // Fallback method
-                    filePath = file.TryGetLocalPath() ?? string.Empty;
-                }
-                
-                if (!string.IsNullOrEmpty(filePath))
-                {
-                    StatusMessage = "ファイルを読み込み中...";
-                    StatusMessageColor = "Blue";
-                    
-                    await LoadFileAsync(filePath);
-                }
-                else
-                {
-                    StatusMessage = "ファイルパスを取得できませんでした";
-                    StatusMessageColor = "Red";
-                }
-            }
-            else
-            {
-                StatusMessage = "ファイル選択がキャンセルされました";
-                StatusMessageColor = "Gray";
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in SelectFileAsync: {ex}");
-            StatusMessage = $"ファイル選択エラー: {ex.Message}";
-            StatusMessageColor = "Red";
-        }
-    }
+    // SelectFileAsyncメソッド削除（ドラッグ&ドロップのみ対応）
 
     private void Play()
     {
@@ -730,19 +725,19 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
                     // Enhanced color transition for flash effect with better contrast
                     if (isFlashing)
                     {
-                        // Dark flash with bright accent
-                        FlashBackground = new SolidColorBrush(Color.Parse("#1A202C"));
+                        // より明るい色で光らせる
+                        FlashBackground = new SolidColorBrush(Color.Parse("#4C1D95"));
                         FlashTextColor = new SolidColorBrush(Color.Parse("#F7FAFC"));
                     }
                     else
                     {
-                        // Light flash with dark text
-                        FlashBackground = new SolidColorBrush(Color.Parse("#F7FAFC"));
-                        FlashTextColor = new SolidColorBrush(Color.Parse("#2D3748"));
+                        // 暗い紫色で滑らかに遷移
+                        FlashBackground = new SolidColorBrush(Color.Parse("#2D1B69"));
+                        FlashTextColor = new SolidColorBrush(Color.Parse("#F7FAFC"));
                     }
                     
                     // Subtle opacity animation for smoother visual transition
-                    FlashOpacity = isFlashing ? 0.95 : 1.0;
+                    FlashOpacity = isFlashing ? 0.95 : 0.8;
                 }
             });
         }
@@ -793,12 +788,19 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
     private void UpdatePatternButtonColors()
     {
-        var activeColor = new SolidColorBrush(Color.Parse("#3182CE"));
-        var inactiveColor = new SolidColorBrush(Color.Parse("#4A5568"));
+        try
+        {
+            var activeColor = new SolidColorBrush(Color.Parse("#3182CE"));
+            var inactiveColor = new SolidColorBrush(Color.Parse("#4A5568"));
 
-        Pattern1Background = SelectedFlashPattern == FlashPattern.SingleArea ? activeColor : inactiveColor;
-        Pattern2Background = SelectedFlashPattern == FlashPattern.FourCircles ? activeColor : inactiveColor;
-        Pattern3Background = SelectedFlashPattern == FlashPattern.ProgressiveBar ? activeColor : inactiveColor;
+            Pattern1Background = SelectedFlashPattern == FlashPattern.SingleArea ? activeColor : inactiveColor;
+            Pattern2Background = SelectedFlashPattern == FlashPattern.FourCircles ? activeColor : inactiveColor;
+            Pattern3Background = SelectedFlashPattern == FlashPattern.ProgressiveBar ? activeColor : inactiveColor;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"UpdatePatternButtonColors error: {ex.Message}");
+        }
     }
 
     private void ExecuteSingleAreaFlash(FlashEventArgs e)
@@ -822,10 +824,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
         }
         else
         {
-            // リセット - 暗い背景
-            FlashBackground = new SolidColorBrush(Color.Parse("#1A202C"));
+            // リセット時は黒色を避けて、暗い紫色に遷移
+            FlashBackground = new SolidColorBrush(Color.Parse("#2D1B69"));
             FlashTextColor = new SolidColorBrush(Color.Parse("#F7FAFC"));
-            FlashOpacity = 1.0;
+            FlashOpacity = 0.7;
         }
     }
 
@@ -1029,6 +1031,313 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
     {
         var timeSpan = TimeSpan.FromSeconds(seconds);
         return $"{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+    }
+    
+    private void LoadSettings()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            
+            // ユーザーノートを復元（直接フィールドを設定）
+            _userNotes = settings.UserNotes;
+            this.RaisePropertyChanged(nameof(UserNotes));
+            
+            // 最後のBPMを復元（直接フィールドを設定）
+            _bpm = settings.LastBpm;
+            if (_bpmSyncController != null)
+            {
+                _bpmSyncController.BPM = _bpm;
+            }
+            this.RaisePropertyChanged(nameof(BPM));
+            this.RaisePropertyChanged(nameof(CurrentBpmLabel));
+            
+            // 最後の音量を復元（直接フィールドを設定）
+            _volume = settings.LastVolume;
+            if (_audioEngine != null)
+            {
+                _audioEngine.Volume = (float)_volume;
+            }
+            this.RaisePropertyChanged(nameof(Volume));
+            this.RaisePropertyChanged(nameof(VolumePercentage));
+            
+            // フラッシュパターンを復元
+            if (Enum.TryParse<FlashPattern>(settings.LastFlashPattern, out var pattern))
+            {
+                _selectedFlashPattern = pattern;
+                if (_flashController != null)
+                {
+                    _flashController.SelectedFlashPattern = pattern;
+                }
+                UpdatePatternButtonColors();
+                this.RaisePropertyChanged(nameof(SelectedFlashPattern));
+                this.RaisePropertyChanged(nameof(CurrentPatternDescription));
+            }
+            
+            // インポートした曲一覧を復元
+            ImportedTracks.Clear();
+            foreach (var track in settings.ImportedTracks)
+            {
+                var trackVM = new TrackInfoViewModel(track);
+                trackVM.LoadRequested += OnTrackLoadRequested;
+                trackVM.RemoveRequested += OnTrackRemoveRequested;
+                ImportedTracks.Add(trackVM);
+            }
+            
+            this.RaisePropertyChanged(nameof(HasImportedTracks));
+            
+            Console.WriteLine("設定を読み込み完了");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"設定読み込みエラー: {ex.Message}");
+        }
+    }
+    
+    // 個別保存メソッド群
+    private void SaveUserNotes()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            settings.UserNotes = UserNotes;
+            _settingsService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ユーザーノート保存エラー: {ex.Message}");
+        }
+    }
+    
+    private void SaveLastBpm()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            settings.LastBpm = BPM;
+            _settingsService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"最後のBPM保存エラー: {ex.Message}");
+        }
+    }
+    
+    private void SaveLastFlashPattern()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            settings.LastFlashPattern = SelectedFlashPattern.ToString();
+            _settingsService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"最後のフラッシュパターン保存エラー: {ex.Message}");
+        }
+    }
+    
+    private void SaveLastVolume()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            settings.LastVolume = Volume;
+            _settingsService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"最後の音量保存エラー: {ex.Message}");
+        }
+    }
+    
+    private void SaveImportedTracks()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            settings.ImportedTracks.Clear();
+            foreach (var trackVM in ImportedTracks)
+            {
+                settings.ImportedTracks.Add(trackVM.TrackInfo);
+            }
+            _settingsService.SaveSettings(settings);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"インポートトラック保存エラー: {ex.Message}");
+        }
+    }
+    
+    private void SaveCurrentTrackInfo(string filePath)
+    {
+        try
+        {
+            var existingTrack = _settingsService.GetTrackInfo(filePath);
+            
+            if (existingTrack != null)
+            {
+                // 既存のトラックを更新
+                existingTrack.LastUsedTime = DateTime.Now;
+                existingTrack.Bpm = BPM;
+                _currentTrackInfo = existingTrack;
+            }
+            else
+            {
+                // 新しいトラックを作成
+                _currentTrackInfo = new TrackInfo
+                {
+                    FilePath = filePath,
+                    FileName = Path.GetFileName(filePath),
+                    Bpm = BPM,
+                    AddedTime = DateTime.Now,
+                    LastUsedTime = DateTime.Now
+                };
+                
+                _settingsService.AddOrUpdateTrack(_currentTrackInfo);
+                
+                // UI一覧を更新
+                var existingVM = ImportedTracks.FirstOrDefault(t => t.TrackInfo.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
+                if (existingVM == null)
+                {
+                    var newTrackVM = new TrackInfoViewModel(_currentTrackInfo);
+                    newTrackVM.LoadRequested += OnTrackLoadRequested;
+                    newTrackVM.RemoveRequested += OnTrackRemoveRequested;
+                    ImportedTracks.Add(newTrackVM);
+                    this.RaisePropertyChanged(nameof(HasImportedTracks));
+                }
+            }
+            
+            SaveImportedTracks();
+            Console.WriteLine($"トラック情報を保存: {Path.GetFileName(filePath)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"トラック情報保存エラー: {ex.Message}");
+        }
+    }
+    
+    private async Task LoadTrackFromHistory(TrackInfoViewModel trackVM)
+    {
+        try
+        {
+            var trackInfo = trackVM.TrackInfo;
+            
+            if (!File.Exists(trackInfo.FilePath))
+            {
+                StatusMessage = $"ファイルが見つかりません: {trackInfo.FileName}";
+                StatusMessageColor = "Red";
+                return;
+            }
+            
+            // ファイルを読み込み
+            await LoadFileAsync(trackInfo.FilePath);
+            
+            // 保存されたBPMを強制的に復元（上書き）
+            var savedBpm = trackInfo.Bpm;
+            
+            Console.WriteLine($"読み込み中: ファイル={trackInfo.FileName}, 保存済みBPM={savedBpm}, 現在のBPM={_bpm}");
+            
+            // BPMを強制的に保存済みの値に設定
+            _bpm = savedBpm;
+            if (_bpmSyncController != null)
+            {
+                _bpmSyncController.BPM = _bpm;
+            }
+            this.RaisePropertyChanged(nameof(BPM));
+            this.RaisePropertyChanged(nameof(CurrentBpmLabel));
+            
+            Console.WriteLine($"BPM上書き完了: 新しいBPM={_bpm}");
+            
+            // 最後に使用した時刻を更新
+            trackInfo.LastUsedTime = DateTime.Now;
+            _currentTrackInfo = trackInfo;
+            
+            SaveImportedTracks();
+            
+            StatusMessage = $"トラック復元完了: {trackInfo.FileName}";
+            StatusMessageColor = "Green";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"トラック読み込みエラー: {ex.Message}";
+            StatusMessageColor = "Red";
+            Console.WriteLine($"トラック読み込みエラー: {ex}");
+        }
+    }
+    
+    private void RemoveTrackFromHistory(TrackInfoViewModel trackVM)
+    {
+        try
+        {
+            _settingsService.RemoveTrack(trackVM.TrackInfo.FilePath);
+            ImportedTracks.Remove(trackVM);
+            this.RaisePropertyChanged(nameof(HasImportedTracks));
+            
+            SaveImportedTracks();
+            
+            StatusMessage = $"トラックを削除しました: {trackVM.TrackInfo.FileName}";
+            StatusMessageColor = "Gray";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"トラック削除エラー: {ex.Message}";
+            StatusMessageColor = "Red";
+            Console.WriteLine($"トラック削除エラー: {ex}");
+        }
+    }
+    
+    private async void OnTrackLoadRequested(TrackInfoViewModel trackVM)
+    {
+        await LoadTrackFromHistory(trackVM);
+    }
+    
+    private void OnTrackRemoveRequested(TrackInfoViewModel trackVM)
+    {
+        RemoveTrackFromHistory(trackVM);
+    }
+    
+    private void SaveCurrentBpm()
+    {
+        try
+        {
+            if (_currentTrackInfo == null)
+            {
+                StatusMessage = "現在読み込まれている曲がありません";
+                StatusMessageColor = "Orange";
+                return;
+            }
+            
+            // 現在のBPMを保存（個別のトラック情報のみ）
+            _currentTrackInfo.Bpm = BPM;
+            _settingsService.AddOrUpdateTrack(_currentTrackInfo);
+            
+            // 設定ファイルのimportedTracksも更新（ただしlastBpmは更新しない）
+            SaveImportedTracks();
+            
+            // UI一覧の対応する項目も更新
+            var trackVM = ImportedTracks.FirstOrDefault(t => t.TrackInfo.FilePath.Equals(_currentTrackInfo.FilePath, StringComparison.OrdinalIgnoreCase));
+            if (trackVM != null)
+            {
+                // TrackInfoViewModelの内容を更新するために、プロパティ変更を通知
+                trackVM.TrackInfo.Bpm = BPM;
+                trackVM.RefreshDisplay();
+            }
+            
+            // BPM保存ボタンでは曲のBPMのみ保存（lastBpmは保存しない）
+            SaveImportedTracks();
+            
+            StatusMessage = $"BPM {BPM} を保存しました: {_currentTrackInfo.FileName}";
+            StatusMessageColor = "Green";
+            
+            Console.WriteLine($"BPM saved for track: {_currentTrackInfo.FileName}, BPM: {BPM}");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"BPM保存エラー: {ex.Message}";
+            StatusMessageColor = "Red";
+            Console.WriteLine($"BPM保存エラー: {ex}");
+        }
     }
 
     public void Dispose()
